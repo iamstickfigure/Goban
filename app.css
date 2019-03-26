@@ -1,0 +1,4 @@
+g.lines line {
+    stroke:black;
+    shape-rendering: crispEdges;
+}
