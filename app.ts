@@ -79,20 +79,20 @@ class Board {
             .data(intersections)
                 .enter()
                 .append('line')
-                    .attr('x1', (d, i) => this.getBoardX(i))
-                    .attr('y1', (d, i) => 0)
-                    .attr('x2', (d, i) => this.getBoardX(i))
-                    .attr('y2', (d, i) => height);
+                    .attr('x1', d => this.getBoardX(d[0].xPos))
+                    .attr('y1', d => 0)
+                    .attr('x2', d => this.getBoardX(d[0].xPos))
+                    .attr('y2', d => height);
 
         lines.append('g').attr('class', 'y-lines')
             .selectAll('line')
             .data(intersections[0])
                 .enter()
                 .append('line')
-                    .attr('x1', (d, i) => 0)
-                    .attr('y1', (d, i) => this.getBoardY(i))
-                    .attr('x2', (d, i) => width)
-                    .attr('y2', (d, i) => this.getBoardY(i));
+                    .attr('x1', d => 0)
+                    .attr('y1', d => this.getBoardY(d.yPos))
+                    .attr('x2', d => width)
+                    .attr('y2', d => this.getBoardY(d.yPos));
     }
 
     private drawStones() {
