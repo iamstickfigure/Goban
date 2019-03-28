@@ -3,22 +3,42 @@ import * as d3 from 'd3';
 import './app.css';
 
 type SVGSelection = d3.Selection<SVGSVGElement, {}, HTMLElement, any>;
+type Selection = d3.Selection<SVGGElement, {}, HTMLElement, any>;
 
-class App {
-    private svg: SVGSelection;
+enum Stone {
+    None = 0,
+    Black,
+    White
+}
+
+class Intersection {
+    xPos: number;
+    yPos: number;
+    stone: Stone;
+    constructor(x, y) {
+        this.xPos = x;
+        this.yPos = y;
+        this.stone = Stone.None;
+    }
+}
+
+class Board {
+    private boardElement: Selection;
     private width: number = 500;
     private height: number = 500;
     private xLines: number = 19;
     private yLines: number = 19;
     private intersections: Intersection[][];
 
-    constructor() {
+    constructor(boardElement: Selection, width: number, height: number) {
         const {
-            width,
-            height,
             xLines,
             yLines
         } = this;
+
+        this.boardElement = boardElement;
+        this.width = width;
+        this.height = height;
 
         this.intersections = new Array(xLines);
         for(let x = 0; x < xLines; x++) {
@@ -28,26 +48,21 @@ class App {
                 this.intersections[x][y] = new Intersection(x, y);
             }
         }
+    }
 
-        const svg = d3.select('#goban').append('svg');
-
-        svg.attr('width', width)
-            .attr('height', height);
-
-        this.svg = svg;
-
+    public draw() {
         this.drawGrid();
     }
 
-    drawGrid() {
+    private drawGrid() {
         const {
-            svg,
+            boardElement,
             intersections,
             width,
             height
         } = this;
 
-        const lines = svg.append('g').attr('class', 'lines');
+        const lines = boardElement.append('g').attr('class', 'lines');
 
         lines.append('g').attr('class', 'x-lines')
             .selectAll('line')
@@ -70,29 +85,38 @@ class App {
                     .attr('y2', (d, i) => this.getBoardY(i));
     }
 
-    getBoardX(x) {
+    private getBoardX(x) {
         return (x + .5) * (this.width / this.xLines);
     }
 
-    getBoardY(y) {
+    private getBoardY(y) {
         return (y + .5) * (this.height / this.yLines);
     }
 }
 
-enum Stone {
-    None = 0,
-    Black,
-    White
-}
+class App {
+    private board: Board;
+    private svg: SVGSelection;
+    private width: number = 500;
+    private height: number = 500;
 
-class Intersection {
-    xPos: number;
-    yPos: number;
-    stone: Stone;
-    constructor(x, y) {
-        this.xPos = x;
-        this.yPos = y;
-        this.stone = Stone.None;
+    constructor() {
+        const {
+            width,
+            height
+        } = this;
+
+        const svg = d3.select('#goban').append('svg');
+        const boardElement = svg.append('g').attr('class', 'board');
+
+        this.board = new Board(boardElement, width, height);
+
+        svg.attr('width', width)
+            .attr('height', height);
+
+        this.svg = svg;
+
+        this.board.draw();
     }
 }
 
