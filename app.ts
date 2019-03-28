@@ -5,6 +5,12 @@ import './app.css';
 type SVGSelection = d3.Selection<SVGSVGElement, {}, HTMLElement, any>;
 type Selection = d3.Selection<SVGGElement, {}, HTMLElement, any>;
 
+const STONE_CLASSES = [
+    "",
+    "black",
+    "white"
+];
+
 enum Stone {
     None = 0,
     Black,
@@ -23,12 +29,13 @@ class Intersection {
 }
 
 class Board {
+    private intersections: Intersection[][];
     private boardElement: Selection;
-    private width: number = 500;
-    private height: number = 500;
+    private stoneRadius: number;
+    private width: number;
+    private height: number;
     private xLines: number = 19;
     private yLines: number = 19;
-    private intersections: Intersection[][];
 
     constructor(boardElement: Selection, width: number, height: number) {
         const {
@@ -39,6 +46,7 @@ class Board {
         this.boardElement = boardElement;
         this.width = width;
         this.height = height;
+        this.stoneRadius = Math.min(width / xLines, height / yLines) / 2;
 
         this.intersections = new Array(xLines);
         for(let x = 0; x < xLines; x++) {
@@ -46,12 +54,14 @@ class Board {
 
             for(let y = 0; y < yLines; y++) {
                 this.intersections[x][y] = new Intersection(x, y);
+                this.intersections[x][y].stone = Math.random() > .5 ? Stone.Black : Stone.None;
             }
         }
     }
 
     public draw() {
         this.drawGrid();
+        this.drawStones();
     }
 
     private drawGrid() {
@@ -84,6 +94,36 @@ class Board {
                     .attr('x2', (d, i) => width)
                     .attr('y2', (d, i) => this.getBoardY(i));
     }
+
+    private drawStones() {
+        const {
+            boardElement,
+            intersections,
+            stoneRadius
+        } = this;
+
+        const stones = boardElement.append('g').attr('class', 'stones');
+
+        const columns = stones.selectAll('g.column')
+            .data(intersections)
+                .enter()
+                .append('g')
+                    .attr('class', 'column');
+
+        columns.selectAll('.stone')
+            .data(col => col)
+                .enter()
+                .filter(d => d.stone != Stone.None)
+                .append('circle')
+                    .attr('class', d => `stone ${STONE_CLASSES[d.stone]}`)
+                    .attr('cx', d => this.getBoardX(d.xPos))
+                    .attr('cy', d => this.getBoardX(d.yPos))
+                    .attr('r', stoneRadius);
+    }
+
+    // private drawStone() {
+        
+    // }
 
     private getBoardX(x) {
         return (x + .5) * (this.width / this.xLines);

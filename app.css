@@ -2,3 +2,15 @@ g.lines line {
     stroke:black;
     shape-rendering: crispEdges;
 }
+
+.stone.black {
+    stroke: black;
+    stroke-opacity: 0.1;
+    fill: black;
+}
+
+.stone.white {
+    stroke: black;
+    stroke-opacity: 0.1;
+    fill: seashell;
+}
