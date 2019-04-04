@@ -21,10 +21,10 @@ class Intersection {
     xPos: number;
     yPos: number;
     stone: Stone;
-    constructor(x, y) {
+    constructor(x, y, stone = Stone.None) {
         this.xPos = x;
         this.yPos = y;
-        this.stone = Stone.None;
+        this.stone = stone;
     }
 }
 
@@ -36,6 +36,7 @@ class Board {
     private height: number;
     private xLines: number = 19;
     private yLines: number = 19;
+    private turn: Stone = Stone.Black;
 
     constructor(boardElement: Selection, width: number, height: number) {
         const {
@@ -57,6 +58,19 @@ class Board {
                 this.intersections[x][y].stone = Math.random() > .5 ? Stone.Black : Stone.None;
             }
         }
+    }
+
+    public nextTurn() {
+        if(this.turn === Stone.Black) {
+            this.turn = Stone.White;
+        }
+        else {
+            this.turn = Stone.Black;
+        }
+    }
+
+    public setTurn(turn: Stone) {
+        this.turn = turn;
     }
 
     public draw() {
@@ -96,6 +110,7 @@ class Board {
     }
 
     private drawStones() {
+        const self = this;
         const {
             boardElement,
             intersections,
@@ -119,6 +134,35 @@ class Board {
                     .attr('cx', d => this.getBoardX(d.xPos))
                     .attr('cy', d => this.getBoardX(d.yPos))
                     .attr('r', stoneRadius);
+
+        const intSelect = columns.selectAll('.intersection')
+            .data(col => col)
+                .enter()
+                .append('g')
+                    .attr('class', 'intersection');
+
+        intSelect.append('rect')
+            .attr('class', 'intersection-area')
+            .attr('x', d => this.getBoardX(d.xPos) - stoneRadius)
+            .attr('y', d => this.getBoardX(d.yPos) - stoneRadius)
+            .attr('width', stoneRadius*2)
+            .attr('height', stoneRadius*2);
+
+        intSelect.on('mouseover', function(d) {
+            d3.select(this)
+                .append('circle')
+                .attr('class', `highlight stone ${STONE_CLASSES[self.turn]}`)
+                .attr('cx', self.getBoardX(d.xPos))
+                .attr('cy', self.getBoardX(d.yPos))
+                .attr('r', stoneRadius);
+        }).on('mouseout', function() {
+            d3.select(this)
+                .select('circle.highlight')
+                .remove();
+        }).on('click', function(d) {
+            intersections[d.xPos][d.yPos] = new Intersection(d.xPos, d.yPos, self.turn);
+            self.nextTurn();
+        });
     }
 
     // private drawStone() {

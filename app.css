@@ -3,6 +3,17 @@ g.lines line {
     shape-rendering: crispEdges;
 }
 
+.intersection {
+    stroke: none;
+    fill: transparent;
+    z-index: 10;
+}
+
+.highlight {
+    pointer-events: none;
+    fill-opacity: 0.5;
+}
+
 .stone.black {
     stroke: black;
     stroke-opacity: 0.1;
