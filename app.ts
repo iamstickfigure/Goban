@@ -21,10 +21,10 @@ class Intersection {
     xPos: number;
     yPos: number;
     stone: Stone;
-    constructor(x, y, stone = Stone.None) {
+    constructor(x, y) {
         this.xPos = x;
         this.yPos = y;
-        this.stone = stone;
+        this.stone = Stone.None;
     }
 }
 
@@ -160,8 +160,9 @@ class Board {
                 .select('circle.highlight')
                 .remove();
         }).on('click', function(d) {
-            intersections[d.xPos][d.yPos] = new Intersection(d.xPos, d.yPos, self.turn);
+            intersections[d.xPos][d.yPos].stone = self.turn;
             self.nextTurn();
+            self.drawStones();
         });
     }
 
