@@ -28,10 +28,10 @@ class Intersection {
     }
 }
 
-class Board {
+export class Board {
     private intersections: Intersection[][];
     private boardElement: Selection;
-    private stoneRadius: number;
+    public stoneRadius: number;
     private width: number;
     private height: number;
     private xLines: number = 19;
