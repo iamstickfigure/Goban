@@ -5,7 +5,7 @@ export type SVGSelection = d3.Selection<SVGSVGElement, {}, HTMLElement, any>;
 export type Selection = d3.Selection<SVGGElement, {}, HTMLElement, any>;
 
 export const STONE_CLASSES = [
-    "",
+    "empty",
     "black",
     "white"
 ];
@@ -54,7 +54,7 @@ export class Board {
 
             for(let y = 0; y < yLines; y++) {
                 this.intersections[x][y] = new Intersection(x, y);
-                this.intersections[x][y].stone = Math.random() > .5 ? Stone.Black : Stone.None;
+                // this.intersections[x][y].stone = Math.random() > .5 ? Stone.Black : Stone.None;
             }
         }
     }
@@ -74,6 +74,8 @@ export class Board {
 
     public draw() {
         this.drawGrid();
+        this.boardElement.append('g').attr('class', 'intersections');
+        this.boardElement.append('g').attr('class', 'overlay');
         this.drawStones();
     }
 
@@ -93,18 +95,18 @@ export class Board {
                 .enter()
                 .append('line')
                     .attr('x1', d => this.getBoardX(d[0].xPos))
-                    .attr('y1', d => 0)
+                    .attr('y1', 0)
                     .attr('x2', d => this.getBoardX(d[0].xPos))
-                    .attr('y2', d => height);
+                    .attr('y2', height);
 
         lines.append('g').attr('class', 'y-lines')
             .selectAll('line')
             .data(intersections[0])
                 .enter()
                 .append('line')
-                    .attr('x1', d => 0)
+                    .attr('x1', 0)
                     .attr('y1', d => this.getBoardY(d.yPos))
-                    .attr('x2', d => width)
+                    .attr('x2', width)
                     .attr('y2', d => this.getBoardY(d.yPos));
     }
 
@@ -116,53 +118,83 @@ export class Board {
             stoneRadius
         } = this;
 
-        const stones = boardElement.append('g').attr('class', 'stones');
+        const allIntersections = intersections.reduce((all, col) => all.concat(col));
 
-        const columns = stones.selectAll('g.column')
-            .data(intersections)
-                .enter()
-                .append('g')
-                    .attr('class', 'column');
+        const ints:any = boardElement.select('.intersections')
+            .selectAll('.intersection')
+            .data(allIntersections);
+            
+        ints.enter()
+            .append('circle')
+            .merge(ints)
+                .attr('class', d => `intersection stone ${STONE_CLASSES[d.stone]}`)
+                .attr('cx', d => this.getBoardX(d.xPos))
+                .attr('cy', d => this.getBoardY(d.yPos))
+                .attr('r', stoneRadius);
 
-        columns.selectAll('.stone')
-            .data(col => col)
-                .enter()
-                .filter(d => d.stone != Stone.None)
-                .append('circle')
-                    .attr('class', d => `stone ${STONE_CLASSES[d.stone]}`)
-                    .attr('cx', d => this.getBoardX(d.xPos))
-                    .attr('cy', d => this.getBoardX(d.yPos))
-                    .attr('r', stoneRadius);
+        const overlay = boardElement.select('g.overlay');
 
-        const intSelect = columns.selectAll('.intersection')
-            .data(col => col)
-                .enter()
-                .append('g')
-                    .attr('class', 'intersection');
-
-        intSelect.append('rect')
+        const overlayInts = overlay.selectAll('.overlay-int')
+            .data(allIntersections)
+            .enter()
+            .append('g')
+                .attr('class', 'overlay-int');
+        
+        overlayInts.append('rect')
             .attr('class', 'intersection-area')
+            .attr('id', d => `int-${d.xPos}-${d.yPos}`)
             .attr('x', d => this.getBoardX(d.xPos) - stoneRadius)
-            .attr('y', d => this.getBoardX(d.yPos) - stoneRadius)
+            .attr('y', d => this.getBoardY(d.yPos) - stoneRadius)
             .attr('width', stoneRadius*2)
             .attr('height', stoneRadius*2);
 
-        intSelect.on('mouseover', function(d) {
+        overlayInts.on('mouseover', function(d) {
             d3.select(this)
                 .append('circle')
                 .attr('class', `highlight stone ${STONE_CLASSES[self.turn]}`)
                 .attr('cx', self.getBoardX(d.xPos))
-                .attr('cy', self.getBoardX(d.yPos))
+                .attr('cy', self.getBoardY(d.yPos))
                 .attr('r', stoneRadius);
         }).on('mouseout', function() {
             d3.select(this)
                 .select('circle.highlight')
                 .remove();
         }).on('click', function(d) {
+            // intersections[d.xPos][d.yPos] = new Intersection(d.xPos, d.yPos);
             intersections[d.xPos][d.yPos].stone = self.turn;
+
             self.nextTurn();
             self.drawStones();
+            // self.printStones();
         });
+    }
+
+    private printStones() {
+        const {
+            xLines,
+            yLines,
+            intersections
+        } = this;
+
+        let board = "";
+
+        for(let y = 0; y < yLines; y++) {
+            for(let x = 0; x < xLines; x++) {
+                if(intersections[x][y].stone == Stone.Black) {
+                    board += "⚫";
+                }
+                else if(intersections[x][y].stone == Stone.White) {
+                    board += "⚪";
+                }
+                else {
+                    board += "🞡";
+                }
+            }
+
+            board += "\n";
+        }
+
+        console.log(board);
     }
 
     // private drawStone() {

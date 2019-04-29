@@ -3,7 +3,7 @@ g.lines line {
     shape-rendering: crispEdges;
 }
 
-.intersection {
+.overlay-int {
     stroke: none;
     fill: transparent;
     z-index: 10;
@@ -12,6 +12,10 @@ g.lines line {
 .highlight {
     pointer-events: none;
     fill-opacity: 0.5;
+}
+
+.stone.empty {
+    display: none;
 }
 
 .stone.black {
