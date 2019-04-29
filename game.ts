@@ -160,13 +160,21 @@ export class Board {
                 .select('circle.highlight')
                 .remove();
         }).on('click', function(d) {
-            // intersections[d.xPos][d.yPos] = new Intersection(d.xPos, d.yPos);
-            intersections[d.xPos][d.yPos].stone = self.turn;
+            self.makeMove(d.xPos, d.yPos);
+        });
+    }
+
+    private makeMove(xPos, yPos) {
+        const self = this;
+
+        if(self.intersections[xPos][yPos].stone == Stone.None) {
+            // intersections[xPos][yPos] = new Intersection(xPos, yPos);
+            self.intersections[xPos][yPos].stone = self.turn;
 
             self.nextTurn();
             self.drawStones();
             // self.printStones();
-        });
+        }
     }
 
     private printStones() {
