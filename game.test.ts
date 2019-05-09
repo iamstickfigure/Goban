@@ -2,7 +2,7 @@ import * as puppeteer from 'puppeteer';
 import { Board } from './game';
 
 test('stoneRadius', () => {
-    const board = new Board(null, 38, 38);
+    const board = new Board(null, 38, 38, 19, 19, null);
 
     expect(board.stoneRadius).toBe(1);
 });

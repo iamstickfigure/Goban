@@ -28,7 +28,6 @@ export class Intersection {
 }
 
 export class Board {
-    private intersections: Intersection[][];
     private boardElement: Selection;
     public stoneRadius: number;
     private width: number;
@@ -36,53 +35,32 @@ export class Board {
     private xLines: number = 19;
     private yLines: number = 19;
     private turn: Stone = Stone.Black;
+    private makeMove: Function;
 
-    constructor(boardElement: Selection, width: number, height: number) {
-        const {
-            xLines,
-            yLines
-        } = this;
-
+    constructor(boardElement: Selection, width: number, height: number, xLines: number, yLines: number, makeMove: Function) {
+        this.xLines = xLines;
+        this.yLines = yLines;
         this.boardElement = boardElement;
         this.width = width;
         this.height = height;
         this.stoneRadius = Math.min(width / xLines, height / yLines) / 2;
-
-        this.intersections = new Array(xLines);
-        for(let x = 0; x < xLines; x++) {
-            this.intersections[x] = new Array(yLines);
-
-            for(let y = 0; y < yLines; y++) {
-                this.intersections[x][y] = new Intersection(x, y);
-                // this.intersections[x][y].stone = Math.random() > .5 ? Stone.Black : Stone.None;
-            }
-        }
-    }
-
-    public nextTurn() {
-        if(this.turn === Stone.Black) {
-            this.turn = Stone.White;
-        }
-        else {
-            this.turn = Stone.Black;
-        }
+        this.makeMove = makeMove;
     }
 
     public setTurn(turn: Stone) {
         this.turn = turn;
     }
 
-    public draw() {
-        this.drawGrid();
+    public draw(intersections: Intersection[][]) {
+        this.drawGrid(intersections);
         this.boardElement.append('g').attr('class', 'intersections');
         this.boardElement.append('g').attr('class', 'overlay');
-        this.drawStones();
+        this.drawStones(intersections);
     }
 
-    private drawGrid() {
+    private drawGrid(intersections: Intersection[][]) {
         const {
             boardElement,
-            intersections,
             width,
             height
         } = this;
@@ -110,11 +88,10 @@ export class Board {
                     .attr('y2', d => this.getBoardY(d.yPos));
     }
 
-    private drawStones() {
+    public drawStones(intersections: Intersection[][]) {
         const self = this;
         const {
             boardElement,
-            intersections,
             stoneRadius
         } = this;
 
@@ -142,7 +119,8 @@ export class Board {
         
         overlayInts.append('rect')
             .attr('class', 'intersection-area')
-            .attr('id', d => `int-${d.xPos}-${d.yPos}`)
+            .attr('data-xPos', d => d.xPos)
+            .attr('data-yPos', d => d.yPos)
             .attr('x', d => this.getBoardX(d.xPos) - stoneRadius)
             .attr('y', d => this.getBoardY(d.yPos) - stoneRadius)
             .attr('width', stoneRadius*2)
@@ -164,24 +142,10 @@ export class Board {
         });
     }
 
-    private makeMove(xPos, yPos) {
-        const self = this;
-
-        if(self.intersections[xPos][yPos].stone == Stone.None) {
-            // intersections[xPos][yPos] = new Intersection(xPos, yPos);
-            self.intersections[xPos][yPos].stone = self.turn;
-
-            self.nextTurn();
-            self.drawStones();
-            // self.printStones();
-        }
-    }
-
-    private printStones() {
+    public printStones(intersections: Intersection[][]) {
         const {
             xLines,
-            yLines,
-            intersections
+            yLines
         } = this;
 
         let board = "";
@@ -223,23 +187,76 @@ export class Game {
     private svg: SVGSelection;
     private width: number = 500;
     private height: number = 500;
+    private intersections: Intersection[][];
+    private xLines: number = 19;
+    private yLines: number = 19;
+    private turn: Stone = Stone.Black;
 
     constructor() {
         const {
             width,
-            height
+            height,
+            xLines,
+            yLines,
+            makeMove
         } = this;
 
         const svg = d3.select('#goban').append('svg');
         const boardElement = svg.append('g').attr('class', 'board');
 
-        this.board = new Board(boardElement, width, height);
+        this.board = new Board(boardElement, width, height, xLines, yLines, makeMove.bind(this));
 
         svg.attr('width', width)
             .attr('height', height);
 
         this.svg = svg;
+        
+        this.intersections = new Array(xLines);
+        for(let x = 0; x < xLines; x++) {
+            this.intersections[x] = new Array(yLines);
 
-        this.board.draw();
+            for(let y = 0; y < yLines; y++) {
+                this.intersections[x][y] = new Intersection(x, y);
+                // this.intersections[x][y].stone = Math.random() > .5 ? Stone.Black : Stone.None;
+            }
+        }
+
+        this.board.draw(this.intersections);
+    }
+
+    private nextTurn() {
+        if(this.turn === Stone.Black) {
+            this.setTurn(Stone.White);
+        }
+        else {
+            this.setTurn(Stone.Black);
+        }
+    }
+
+    private setTurn(turn: Stone) {
+        this.turn = turn;
+        this.board.setTurn(turn);
+    }
+
+    private makeMove(xPos, yPos) {
+        const self = this;
+
+        if(self.intersections[xPos][yPos].stone == Stone.None) {
+            // intersections[xPos][yPos] = new Intersection(xPos, yPos);
+            self.intersections[xPos][yPos].stone = self.turn;
+
+            self.nextTurn();
+            self.updateBoard();
+        }
+    }
+
+    private updateBoard() {
+        const {
+            board,
+            intersections
+        } = this;
+
+        board.drawStones(intersections);
+        // board.printStones();
     }
 }
