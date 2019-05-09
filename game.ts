@@ -183,21 +183,39 @@ export class Board {
 }
 
 export class Game {
-    private board: Board;
+    public board: Board;
+    public intersections: Intersection[][];
     private svg: SVGSelection;
     private width: number = 500;
     private height: number = 500;
-    private intersections: Intersection[][];
     private xLines: number = 19;
     private yLines: number = 19;
     private turn: Stone = Stone.Black;
 
     constructor() {
         const {
+            xLines,
+            yLines
+        } = this;
+        
+        this.intersections = new Array(xLines);
+        for(let x = 0; x < xLines; x++) {
+            this.intersections[x] = new Array(yLines);
+
+            for(let y = 0; y < yLines; y++) {
+                this.intersections[x][y] = new Intersection(x, y);
+                // this.intersections[x][y].stone = Math.random() > .5 ? Stone.Black : Stone.None;
+            }
+        }
+    }
+
+    public initDisplay() {
+        const {
             width,
             height,
             xLines,
             yLines,
+            intersections,
             makeMove
         } = this;
 
@@ -210,35 +228,15 @@ export class Game {
             .attr('height', height);
 
         this.svg = svg;
-        
-        this.intersections = new Array(xLines);
-        for(let x = 0; x < xLines; x++) {
-            this.intersections[x] = new Array(yLines);
-
-            for(let y = 0; y < yLines; y++) {
-                this.intersections[x][y] = new Intersection(x, y);
-                // this.intersections[x][y].stone = Math.random() > .5 ? Stone.Black : Stone.None;
-            }
-        }
-
-        this.board.draw(this.intersections);
+        this.board.draw(intersections);
     }
 
-    private nextTurn() {
-        if(this.turn === Stone.Black) {
-            this.setTurn(Stone.White);
-        }
-        else {
-            this.setTurn(Stone.Black);
-        }
-    }
-
-    private setTurn(turn: Stone) {
+    public setTurn(turn: Stone) {
         this.turn = turn;
         this.board.setTurn(turn);
     }
 
-    private makeMove(xPos, yPos) {
+    public makeMove(xPos, yPos) {
         const self = this;
 
         if(self.intersections[xPos][yPos].stone == Stone.None) {
@@ -247,6 +245,15 @@ export class Game {
 
             self.nextTurn();
             self.updateBoard();
+        }
+    }
+
+    private nextTurn() {
+        if(this.turn === Stone.Black) {
+            this.setTurn(Stone.White);
+        }
+        else {
+            this.setTurn(Stone.Black);
         }
     }
 

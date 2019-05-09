@@ -1,5 +1,5 @@
 import * as puppeteer from 'puppeteer';
-import { Board } from './game';
+import { Board, Game, Stone } from './game';
 
 test('stoneRadius', () => {
     const board = new Board(null, 38, 38, 19, 19, null);
@@ -32,3 +32,103 @@ test('placing stones correctly', async () => {
     expect(white).toHaveLength(1);
     expect(empty).toHaveLength(19 * 19 - 3);
 }, 10000);
+
+test('black can capture atari', () => {
+    const game = new Game();
+    const mockBoard:any = {
+        setTurn: () => {},
+        drawStones: () => {}
+    };
+    game.board = mockBoard;
+
+    /*
+       b
+    b  w  B
+       b
+    */
+
+    game.intersections[1][1].stone = Stone.White;
+
+    game.intersections[1][0].stone = Stone.Black;
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[1][2].stone = Stone.Black;
+
+    game.setTurn(Stone.Black);
+    game.makeMove(2, 1);
+
+    expect(game.intersections[1][1].stone).toEqual(Stone.None);
+});
+
+test('white can capture atari', () => {
+    const game = new Game();
+    const mockBoard:any = {
+        setTurn: () => {},
+        drawStones: () => {}
+    };
+    game.board = mockBoard;
+
+    /*
+       w
+    w  b  W
+       w
+    */
+
+    game.intersections[1][1].stone = Stone.Black;
+
+    game.intersections[1][0].stone = Stone.White;
+    game.intersections[0][1].stone = Stone.White;
+    game.intersections[1][2].stone = Stone.White;
+
+    game.setTurn(Stone.White);
+    game.makeMove(2, 1);
+
+    expect(game.intersections[1][1].stone).toEqual(Stone.None);
+});
+
+test('can capture on edge', () => {
+    const game = new Game();
+    const mockBoard:any = {
+        setTurn: () => {},
+        drawStones: () => {}
+    };
+    game.board = mockBoard;
+
+    /*
+    b
+    w  B
+    b
+    */
+
+    game.intersections[0][1].stone = Stone.White;
+
+    game.intersections[0][0].stone = Stone.Black;
+    game.intersections[0][2].stone = Stone.Black;
+
+    game.setTurn(Stone.Black);
+    game.makeMove(1, 1);
+
+    expect(game.intersections[0][1].stone).toEqual(Stone.None);
+});
+
+test('can capture on corner', () => {
+    const game = new Game();
+    const mockBoard:any = {
+        setTurn: () => {},
+        drawStones: () => {}
+    };
+    game.board = mockBoard;
+
+    /*
+    w  B
+    b
+    */
+
+    game.intersections[0][0].stone = Stone.White;
+
+    game.intersections[0][1].stone = Stone.Black;
+
+    game.setTurn(Stone.Black);
+    game.makeMove(1, 0);
+
+    expect(game.intersections[0][0].stone).toEqual(Stone.None);
+});
