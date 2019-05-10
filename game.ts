@@ -266,17 +266,18 @@ export class Game {
 
         for(let neighbor of neighbors) {
             if(neighbor && neighbor.stone == otherPlayer) {
-                self.isCaptured(neighbor);
+                self.getCapturedGroup(neighbor);
             }
         }
     }
 
-    private isCaptured(intersection: Intersection, visited: Intersection[] = []): boolean {
+    private getCapturedGroup(intersection: Intersection, visited: Intersection[] = []): Intersection[] {
         const self = this;
         const newNeighbors = self.getAdjacentNeighbors(intersection).filter(int => visited.indexOf(int) == -1);
-        const willHaveVisited = [...visited, ...newNeighbors];
+        const willHaveVisited = [...visited, intersection, ...newNeighbors];
 
         let captured = true;
+        let group = [intersection];
         for(let neighbor of newNeighbors) {
             if(neighbor == null) {
                 captured = true;
@@ -285,16 +286,20 @@ export class Game {
                 captured = false;
             }
             else if(neighbor.stone == intersection.stone) {
-                captured = captured && self.isCaptured(neighbor, willHaveVisited);
+                const subGroup = self.getCapturedGroup(neighbor, willHaveVisited);
+                captured = captured && subGroup.length > 0;
+
+                if(captured) {
+                    group = [...group, ...subGroup];
+                }
             }
 
             if(!captured) {
-                return false;
+                return [];
             }
         }
 
-        return captured;
-        // neighbors.reduce((captured, ))
+        return group;
     }
 
     private getOtherPlayer() {
