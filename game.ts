@@ -236,15 +236,96 @@ export class Game {
         this.board.setTurn(turn);
     }
 
-    public makeMove(xPos, yPos) {
+    public makeMove(xPos: number, yPos: number): boolean {
         const self = this;
 
-        if(self.intersections[xPos][yPos].stone == Stone.None) {
-            // intersections[xPos][yPos] = new Intersection(xPos, yPos);
-            self.intersections[xPos][yPos].stone = self.turn;
+        if(self.intersections[xPos][yPos].stone != Stone.None) {
+            return false;
+        }
 
-            self.nextTurn();
-            self.updateBoard();
+        self.finalizeMove(xPos, yPos);
+
+        return true;
+    }
+
+    private finalizeMove(xPos, yPos) {
+        const self = this;
+
+        // intersections[xPos][yPos] = new Intersection(xPos, yPos);
+        self.intersections[xPos][yPos].stone = self.turn;
+
+        self.nextTurn();
+        self.updateBoard();
+    }
+
+    private captureStones(xPos, yPos) {
+        const self = this;
+        const otherPlayer = self.getOtherPlayer();
+        const intersection = self.getIntersection(xPos, yPos)
+        const neighbors = self.getAdjacentNeighbors(intersection);
+
+        for(let neighbor of neighbors) {
+            if(neighbor && neighbor.stone == otherPlayer) {
+                self.isCaptured(neighbor);
+            }
+        }
+    }
+
+    private isCaptured(intersection: Intersection, visited: Intersection[] = []): boolean {
+        const self = this;
+        const newNeighbors = self.getAdjacentNeighbors(intersection).filter(int => visited.indexOf(int) == -1);
+        const willHaveVisited = [...visited, ...newNeighbors];
+
+        let captured = true;
+        for(let neighbor of newNeighbors) {
+            if(neighbor == null) {
+                captured = true;
+            }
+            else if(neighbor.stone == Stone.None) {
+                captured = false;
+            }
+            else if(neighbor.stone == intersection.stone) {
+                captured = captured && self.isCaptured(neighbor, willHaveVisited);
+            }
+
+            if(!captured) {
+                return false;
+            }
+        }
+
+        return captured;
+        // neighbors.reduce((captured, ))
+    }
+
+    private getOtherPlayer() {
+        if(this.turn == Stone.Black) {
+            return Stone.White;
+        } 
+        else {
+            return Stone.Black;
+        }
+    }
+
+    private getAdjacentNeighbors(intersection: Intersection) {
+        const {
+            xPos,
+            yPos
+        } = intersection;
+
+        return [
+            this.getIntersection(xPos, yPos-1),
+            this.getIntersection(xPos, yPos+1),
+            this.getIntersection(xPos-1, yPos),
+            this.getIntersection(xPos+1, yPos)
+        ];
+    }
+
+    private getIntersection(xPos: number, yPos: number) {
+        if(0 <= xPos && xPos < this.xLines && 0 <= yPos && yPos < this.yLines) {
+            return this.intersections[xPos][yPos];
+        }
+        else {
+            return null;
         }
     }
 
