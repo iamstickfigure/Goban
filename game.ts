@@ -274,7 +274,9 @@ export class Game {
     private getCapturedGroup(intersection: Intersection, visited: Intersection[] = []): Intersection[] {
         const self = this;
         const newNeighbors = self.getAdjacentNeighbors(intersection).filter(int => visited.indexOf(int) == -1);
-        const willHaveVisited = [...visited, intersection, ...newNeighbors];
+
+        // It's important here that "visited" is directly modified, so other branches of execution will see the changes
+        Array.prototype.push.apply(visited, [intersection, ...newNeighbors]);
 
         let captured = true;
         let group = [intersection];
@@ -286,7 +288,7 @@ export class Game {
                 captured = false;
             }
             else if(neighbor.stone == intersection.stone) {
-                const subGroup = self.getCapturedGroup(neighbor, willHaveVisited);
+                const subGroup = self.getCapturedGroup(neighbor, visited);
                 captured = captured && subGroup.length > 0;
 
                 if(captured) {

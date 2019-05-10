@@ -192,6 +192,53 @@ test('getCapturedGroup: odd shape', () => {
     expect(captured).toContain(game.intersections[3][3]);
 });
 
+test('getCapturedGroup: circle', () => {
+    const game = new Game();
+
+    /*
+       b  b  b
+    b  w  w  w  b
+    b  w  b  w  b
+    b  w  w  w  b
+       b  b  b
+    */
+
+    game.intersections[1][1].stone = Stone.White;
+    game.intersections[2][1].stone = Stone.White;
+    game.intersections[3][1].stone = Stone.White;
+    game.intersections[1][2].stone = Stone.White;
+    game.intersections[3][2].stone = Stone.White;
+    game.intersections[1][3].stone = Stone.White;
+    game.intersections[2][3].stone = Stone.White;
+    game.intersections[3][3].stone = Stone.White;
+
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[0][2].stone = Stone.Black;
+    game.intersections[0][3].stone = Stone.Black;
+    game.intersections[1][0].stone = Stone.Black;
+    game.intersections[1][4].stone = Stone.Black;
+    game.intersections[2][0].stone = Stone.Black;
+    game.intersections[2][2].stone = Stone.Black;
+    game.intersections[2][4].stone = Stone.Black;
+    game.intersections[3][0].stone = Stone.Black;
+    game.intersections[3][4].stone = Stone.Black;
+    game.intersections[4][1].stone = Stone.Black;
+    game.intersections[4][2].stone = Stone.Black;
+    game.intersections[4][3].stone = Stone.Black;
+
+    const captured = game['getCapturedGroup'](game.intersections[1][1]);
+
+    expect(captured).toHaveLength(8);
+    expect(captured).toContain(game.intersections[1][1]);
+    expect(captured).toContain(game.intersections[2][1]);
+    expect(captured).toContain(game.intersections[3][1]);
+    expect(captured).toContain(game.intersections[1][2]);
+    expect(captured).toContain(game.intersections[3][2]);
+    expect(captured).toContain(game.intersections[1][3]);
+    expect(captured).toContain(game.intersections[2][3]);
+    expect(captured).toContain(game.intersections[3][3]);
+});
+
 test('getCapturedGroup: not captured', () => {
     const game = new Game();
 
