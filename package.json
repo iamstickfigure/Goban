@@ -6,7 +6,7 @@
   "scripts": {
     "start": "webpack-dev-server",
     "build": "webpack",
-    "test": "jest -t getCapturedGroup.*"
+    "test": "jest -t makeMove.*"
   },
   "author": "",
   "license": "ISC",

@@ -231,44 +231,75 @@ export class Game {
         this.board.draw(intersections);
     }
 
-    public setTurn(turn: Stone) {
+    private setTurn(turn: Stone) {
         this.turn = turn;
         this.board.setTurn(turn);
     }
 
-    public makeMove(xPos: number, yPos: number): boolean {
+    private makeMove(xPos: number, yPos: number): boolean {
         const self = this;
+        let legalMove = true;
 
         if(self.intersections[xPos][yPos].stone != Stone.None) {
             return false;
         }
-
-        self.finalizeMove(xPos, yPos);
-
-        return true;
-    }
-
-    private finalizeMove(xPos, yPos) {
-        const self = this;
-
+        
+        // Place stone temporarily
         // intersections[xPos][yPos] = new Intersection(xPos, yPos);
         self.intersections[xPos][yPos].stone = self.turn;
 
-        self.nextTurn();
-        self.updateBoard();
+        const capturedNeighbors = self.getCapturedNeighbors(xPos, yPos);
+
+        // If this move will capture stones, it is a legal move
+        if(capturedNeighbors.length > 0) {
+            legalMove = true;
+        }
+        else {
+            const captured = self.getCapturedGroup(self.intersections[xPos][yPos]);
+
+            // If the placed stone would be captured on placement, it is an illegal move
+            legalMove = captured.length == 0;
+        }
+
+        if(legalMove) {
+            // Move is legal, so continue on.
+            for(let captured of capturedNeighbors) {
+                for(let stone of captured) {
+                    self.intersections[stone.xPos][stone.yPos].stone = Stone.None;
+                }
+            }
+
+            self.nextTurn();
+            self.updateBoard();
+
+            return true;
+        }
+        else {
+            // Move is illegal. Remove the stone
+            self.intersections[xPos][yPos].stone = Stone.None;
+
+            return false;
+        }
     }
 
-    private captureStones(xPos, yPos) {
+    private getCapturedNeighbors(xPos, yPos): Intersection[][] {
         const self = this;
         const otherPlayer = self.getOtherPlayer();
         const intersection = self.getIntersection(xPos, yPos)
         const neighbors = self.getAdjacentNeighbors(intersection);
+        let capturedGroups: Intersection[][] = [];
 
         for(let neighbor of neighbors) {
             if(neighbor && neighbor.stone == otherPlayer) {
-                self.getCapturedGroup(neighbor);
+                const captured = self.getCapturedGroup(neighbor);
+
+                if(captured.length > 0) {
+                    capturedGroups.push(captured);
+                }
             }
         }
+
+        return capturedGroups;
     }
 
     private getCapturedGroup(intersection: Intersection, visited: Intersection[] = []): Intersection[] {

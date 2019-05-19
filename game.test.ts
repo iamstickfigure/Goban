@@ -239,6 +239,54 @@ test('getCapturedGroup: circle', () => {
     expect(captured).toContain(game.intersections[3][3]);
 });
 
+test('getCapturedGroup: area', () => {
+    const game = new Game();
+
+    /*
+       b  b  b
+    b  w  w  w  b
+    b  w  w  w  b
+    b  w  w  w  b
+       b  b  b
+    */
+
+    game.intersections[1][1].stone = Stone.White;
+    game.intersections[2][1].stone = Stone.White;
+    game.intersections[3][1].stone = Stone.White;
+    game.intersections[1][2].stone = Stone.White;
+    game.intersections[3][2].stone = Stone.White;
+    game.intersections[1][3].stone = Stone.White;
+    game.intersections[2][3].stone = Stone.White;
+    game.intersections[3][3].stone = Stone.White;
+    game.intersections[2][2].stone = Stone.White;
+
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[0][2].stone = Stone.Black;
+    game.intersections[0][3].stone = Stone.Black;
+    game.intersections[1][0].stone = Stone.Black;
+    game.intersections[1][4].stone = Stone.Black;
+    game.intersections[2][0].stone = Stone.Black;
+    game.intersections[2][4].stone = Stone.Black;
+    game.intersections[3][0].stone = Stone.Black;
+    game.intersections[3][4].stone = Stone.Black;
+    game.intersections[4][1].stone = Stone.Black;
+    game.intersections[4][2].stone = Stone.Black;
+    game.intersections[4][3].stone = Stone.Black;
+
+    const captured = game['getCapturedGroup'](game.intersections[1][1]);
+
+    expect(captured).toHaveLength(9);
+    expect(captured).toContain(game.intersections[1][1]);
+    expect(captured).toContain(game.intersections[2][1]);
+    expect(captured).toContain(game.intersections[3][1]);
+    expect(captured).toContain(game.intersections[1][2]);
+    expect(captured).toContain(game.intersections[3][2]);
+    expect(captured).toContain(game.intersections[1][3]);
+    expect(captured).toContain(game.intersections[2][3]);
+    expect(captured).toContain(game.intersections[3][3]);
+    expect(captured).toContain(game.intersections[2][2]);
+});
+
 test('getCapturedGroup: not captured', () => {
     const game = new Game();
 
@@ -305,9 +353,11 @@ test('makeMove: black can capture atari', () => {
     game.intersections[0][1].stone = Stone.Black;
     game.intersections[1][2].stone = Stone.Black;
 
-    game.setTurn(Stone.Black);
-    game.makeMove(2, 1);
+    game["setTurn"](Stone.Black);
+    
+    const placed = game["makeMove"](2, 1);
 
+    expect(placed).toBe(true);
     expect(game.intersections[1][1].stone).toEqual(Stone.None);
 });
 
@@ -331,9 +381,11 @@ test('makeMove: white can capture atari', () => {
     game.intersections[0][1].stone = Stone.White;
     game.intersections[1][2].stone = Stone.White;
 
-    game.setTurn(Stone.White);
-    game.makeMove(2, 1);
+    game["setTurn"](Stone.White);
 
+    const placed = game["makeMove"](2, 1);
+
+    expect(placed).toBe(true);
     expect(game.intersections[1][1].stone).toEqual(Stone.None);
 });
 
@@ -356,9 +408,11 @@ test('makeMove: can capture on edge', () => {
     game.intersections[0][0].stone = Stone.Black;
     game.intersections[0][2].stone = Stone.Black;
 
-    game.setTurn(Stone.Black);
-    game.makeMove(1, 1);
+    game["setTurn"](Stone.Black);
 
+    const placed = game["makeMove"](1, 1);
+
+    expect(placed).toBe(true);
     expect(game.intersections[0][1].stone).toEqual(Stone.None);
 });
 
@@ -379,8 +433,147 @@ test('makeMove: can capture on corner', () => {
 
     game.intersections[0][1].stone = Stone.Black;
 
-    game.setTurn(Stone.Black);
-    game.makeMove(1, 0);
+    game["setTurn"](Stone.Black);
 
+    const placed = game["makeMove"](1, 0);
+
+    expect(placed).toBe(true);
     expect(game.intersections[0][0].stone).toEqual(Stone.None);
+});
+
+test('makeMove: multi-capture', () => {
+    const game = new Game();
+    const mockBoard:any = {
+        setTurn: () => {},
+        drawStones: () => {}
+    };
+    game.board = mockBoard;
+
+    /*
+          b
+       b  w  b
+    b  w  B  w  b
+       b  w  b
+          b
+    */
+
+    game.intersections[1][2].stone = Stone.White;
+    game.intersections[2][1].stone = Stone.White;
+    game.intersections[2][3].stone = Stone.White;
+    game.intersections[3][2].stone = Stone.White;
+
+    game.intersections[0][2].stone = Stone.Black;
+    game.intersections[1][1].stone = Stone.Black;
+    game.intersections[2][0].stone = Stone.Black;
+    game.intersections[3][1].stone = Stone.Black;
+    game.intersections[4][2].stone = Stone.Black;
+    game.intersections[3][3].stone = Stone.Black;
+    game.intersections[2][4].stone = Stone.Black;
+    game.intersections[1][3].stone = Stone.Black;
+
+    game["setTurn"](Stone.Black);
+    
+    const placed = game["makeMove"](2, 2);
+
+    expect(placed).toBe(true);
+    expect(game.intersections[1][2].stone).toEqual(Stone.None);
+    expect(game.intersections[2][1].stone).toEqual(Stone.None);
+    expect(game.intersections[2][3].stone).toEqual(Stone.None);
+    expect(game.intersections[3][2].stone).toEqual(Stone.None);
+});
+
+test('makeMove: Cannot place immediately captured stone', () => {
+    const game = new Game();
+    const mockBoard:any = {
+        setTurn: () => {},
+        drawStones: () => {}
+    };
+    game.board = mockBoard;
+
+    /*
+       b
+    b  W  b
+       b
+    */
+
+    game.intersections[1][0].stone = Stone.Black;
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[1][2].stone = Stone.Black;
+    game.intersections[2][1].stone = Stone.Black;
+
+    game["setTurn"](Stone.White);
+    const placed = game["makeMove"](1, 1);
+
+    expect(placed).toBe(false);
+    expect(game.intersections[1][1].stone).toEqual(Stone.None);
+});
+
+test('makeMove: Can place stone if it will capture stones', () => {
+    const game = new Game();
+    const mockBoard:any = {
+        setTurn: () => {},
+        drawStones: () => {}
+    };
+    game.board = mockBoard;
+
+    /*
+       b  w
+    b  w  B  w
+       b  w
+    */
+
+    game.intersections[1][0].stone = Stone.Black;
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[1][2].stone = Stone.Black;
+
+    game.intersections[2][0].stone = Stone.White;
+    game.intersections[1][1].stone = Stone.White;
+    game.intersections[2][2].stone = Stone.White;
+    game.intersections[3][1].stone = Stone.White;
+
+    game["setTurn"](Stone.Black);
+    const placed = game["makeMove"](2, 1);
+
+    expect(placed).toBe(true);
+    expect(game.intersections[2][1].stone).toEqual(Stone.Black);
+    expect(game.intersections[1][1].stone).toEqual(Stone.None);
+});
+
+test('makeMove: Cannot place stone if it repeats the previous board state (Ko)', () => {
+    const game = new Game();
+    const mockBoard:any = {
+        setTurn: () => {},
+        drawStones: () => {}
+    };
+    game.board = mockBoard;
+
+    /*
+       b  w
+    b  w  B  w
+       b  w
+    */
+    /*
+       b  w
+    b  W  b  w
+       b  w
+    */
+
+    game.intersections[1][0].stone = Stone.Black;
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[1][2].stone = Stone.Black;
+
+    game.intersections[2][0].stone = Stone.White;
+    game.intersections[1][1].stone = Stone.White;
+    game.intersections[2][2].stone = Stone.White;
+    game.intersections[3][1].stone = Stone.White;
+
+    game["setTurn"](Stone.Black);
+    const placed1 = game["makeMove"](2, 1);
+    
+    const placed2 = game["makeMove"](1, 1);
+
+    expect(placed1).toBe(true);
+    expect(placed2).toBe(false);
+    expect(game.intersections[2][1].stone).toEqual(Stone.Black);
+    expect(game.intersections[1][1].stone).toEqual(Stone.None);
 });
