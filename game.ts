@@ -184,6 +184,7 @@ export class Board {
 
 export class Game {
     public board: Board;
+    public prevGameState: GameState;
     public intersections: Intersection[][];
     private svg: SVGSelection;
     private width: number = 500;
@@ -262,12 +263,22 @@ export class Game {
         }
 
         if(legalMove) {
-            // Move is legal, so continue on.
+            // Move is legal so far, so continue on.
             for(let captured of capturedNeighbors) {
                 for(let stone of captured) {
                     self.intersections[stone.xPos][stone.yPos].stone = Stone.None;
                 }
             }
+
+            // if(this.checkForKo()) {
+            //     for(let x = 0; x < xLines; x++) {
+            //         for(let y = 0; y < yLines; y++) {
+            //             if(intersections[x][y].stone != prevGameState.intersections[x][y].stone) {
+            //                 return false;
+            //             }
+            //         }
+            //     }
+            // }
 
             self.nextTurn();
             self.updateBoard();
@@ -280,6 +291,27 @@ export class Game {
 
             return false;
         }
+    }
+
+    private checkForKo(): boolean {
+        const {
+            xLines,
+            yLines,
+            intersections,
+            prevGameState: {
+                prevGameState
+            }
+        } = this;
+
+        for(let x = 0; x < xLines; x++) {
+            for(let y = 0; y < yLines; y++) {
+                if(intersections[x][y].stone != prevGameState.intersections[x][y].stone) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     private getCapturedNeighbors(xPos, yPos): Intersection[][] {
@@ -384,5 +416,21 @@ export class Game {
 
         board.drawStones(intersections);
         // board.printStones();
+    }
+}
+
+class GameState {
+    intersections: Intersection[][];
+    turn: Stone;
+    prevGameState: GameState;
+
+    constructor(ints: Intersection[][], t: Stone, prev: GameState = null) {
+        this.intersections = ints;
+        this.turn = t;
+        this.prevGameState = prev;
+    }
+
+    newGameState(intersections: Intersection[][], turn: Stone): GameState {
+        return new GameState(intersections, turn, this);
     }
 }
