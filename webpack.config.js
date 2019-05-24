@@ -1,10 +1,10 @@
 const path = require('path');
-const CopyPlugin = require('copy-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     entry: "./app.ts",
     output: {
-        filename: "bundle.js",
+        filename: "bundle.[contenthash].js",
         path: path.resolve(__dirname, 'dist')
     },
     // Enable sourcemaps for debugging webpack's output.
@@ -32,8 +32,8 @@ module.exports = {
         ]
     },
     plugins: [
-        new CopyPlugin([
-            { from: "./*.html" }
-        ])
+        new HtmlWebpackPlugin({
+            template: 'index.html'
+        })
     ]
 };
