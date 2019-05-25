@@ -216,6 +216,48 @@ export class Game {
         return ints;
     }
 
+    // Auto place stones randomly for performance testing
+    static autoPlacement(game: Game, amount: number) {
+        let running = false;
+        let numPlaced = 0;
+        let maxTime = 0;
+
+        window["game"] = game;
+
+        const int = setInterval(() => {
+            if(!running) {
+                running = true;
+
+                const x = ~~(Math.random() * game.xLines);
+                const y = ~~(Math.random() * game.yLines);
+
+                const now = performance.now();
+                const placed = game.makeMove(x, y);
+                const elapsed = performance.now() - now;
+
+                if(numPlaced % 50 != 0) {
+                    maxTime = Math.max(maxTime, elapsed);
+                }
+                else {
+                    // Reset every 50 moves
+                    maxTime = elapsed;
+                }
+
+                if(placed) {
+                    console.log(`makeMove(${x},${y})\t| ${elapsed.toFixed(0)} ms\t| ${maxTime.toFixed(0)} ms\t| Move ${game.gameState.moveNum}`);
+                }
+
+                numPlaced++;
+
+                running = false;
+            }
+            
+            if(numPlaced > amount) {
+                clearInterval(int);
+            }
+        }, 100);
+    }
+
     public copyIntersections(): Intersection[][] {
         const {
             xLines,
@@ -276,7 +318,7 @@ export class Game {
         self.intersections[xPos][yPos].stone = self.turn;
 
         const capturedNeighbors = self.getCapturedNeighbors(xPos, yPos);
-
+        
         // If this move will capture stones, it is a legal move
         if(capturedNeighbors.length > 0) {
             legalMove = true;
@@ -321,9 +363,9 @@ export class Game {
         else {
             this.setTurn(Stone.Black);
         }
-        
-        this.gameState = this.newGameState();
 
+        this.gameState = this.newGameState();
+        
         // console.log(`prevGameState\n${this.gameState.prevGameState.toString()}`);
         // console.log(`gameState\n${this.gameState.toString()}`);
 
@@ -476,12 +518,20 @@ export class Game {
 class GameState {
     intersections: Intersection[][];
     turn: Stone;
+    moveNum: number = 0;
     prevGameState: GameState;
 
     constructor(ints: Intersection[][], t: Stone, prev: GameState = null) {
         this.turn = t;
         this.prevGameState = prev;
         this.intersections = ints;
+
+        if(prev == null) {
+            this.moveNum = 0;
+        }
+        else {
+            this.moveNum = prev.moveNum + 1;
+        }
     }
 
     public newGameState(intersections: Intersection[][], turn: Stone): GameState {
@@ -504,5 +554,15 @@ class GameState {
                 }
             }).join(' ');
         }).join('\n');
+    }
+
+    public getState(moveNum: number) {
+        let state:GameState = this;
+
+        while(state.moveNum > moveNum) {
+            state = state.prevGameState;
+        }
+
+        return state;
     }
 }
