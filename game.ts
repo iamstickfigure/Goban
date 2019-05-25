@@ -1,5 +1,6 @@
 // https://www.giacomodebidda.com/how-to-import-d3-plugins-with-webpack/
 import * as d3 from 'd3';
+import { transpose } from 'd3';
 
 export type SVGSelection = d3.Selection<SVGSVGElement, {}, HTMLElement, any>;
 export type Selection = d3.Selection<SVGGElement, {}, HTMLElement, any>;
@@ -184,8 +185,8 @@ export class Board {
 
 export class Game {
     public board: Board;
-    public prevGameState: GameState;
     public intersections: Intersection[][];
+    private gameState: GameState = null;
     private svg: SVGSelection;
     private width: number = 500;
     private height: number = 500;
@@ -193,21 +194,46 @@ export class Game {
     private yLines: number = 19;
     private turn: Stone = Stone.Black;
 
-    constructor() {
-        const {
-            xLines,
-            yLines
-        } = this;
+    constructor(xLines: number = 19, yLines: number = 19) {
+        this.xLines = xLines;
+        this.yLines = yLines;
         
-        this.intersections = new Array(xLines);
+        this.intersections = Game.initIntersections(xLines, yLines);
+
+        this.gameState = this.newGameState();
+    }
+
+    static initIntersections(xLines: number = 19, yLines: number = 19): Intersection[][] {
+        let ints = new Array(xLines);
         for(let x = 0; x < xLines; x++) {
-            this.intersections[x] = new Array(yLines);
+            ints[x] = new Array(yLines);
 
             for(let y = 0; y < yLines; y++) {
-                this.intersections[x][y] = new Intersection(x, y);
-                // this.intersections[x][y].stone = Math.random() > .5 ? Stone.Black : Stone.None;
+                ints[x][y] = new Intersection(x, y);
             }
         }
+
+        return ints;
+    }
+
+    public copyIntersections(): Intersection[][] {
+        const {
+            xLines,
+            yLines,
+            intersections
+        } = this;
+
+        let ints = new Array(xLines);
+        for(let x = 0; x < xLines; x++) {
+            ints[x] = new Array(yLines);
+
+            for(let y = 0; y < yLines; y++) {
+                ints[x][y] = new Intersection(x, y);
+                ints[x][y].stone = intersections[x][y].stone
+            }
+        }
+
+        return ints;
     }
 
     public initDisplay() {
@@ -270,19 +296,14 @@ export class Game {
                 }
             }
 
-            // if(this.checkForKo()) {
-            //     for(let x = 0; x < xLines; x++) {
-            //         for(let y = 0; y < yLines; y++) {
-            //             if(intersections[x][y].stone != prevGameState.intersections[x][y].stone) {
-            //                 return false;
-            //             }
-            //         }
-            //     }
-            // }
+            // In case of Ko, reset the board state
+            if(this.checkForKo()) {
+                self.loadGameState(self.gameState);
 
-            self.nextTurn();
-            self.updateBoard();
+                return false;
+            }
 
+            this.nextTurn();
             return true;
         }
         else {
@@ -293,15 +314,67 @@ export class Game {
         }
     }
 
+    private nextTurn() {
+        if(this.turn === Stone.Black) {
+            this.setTurn(Stone.White);
+        }
+        else {
+            this.setTurn(Stone.Black);
+        }
+        
+        this.gameState = this.newGameState();
+
+        // console.log(`prevGameState\n${this.gameState.prevGameState.toString()}`);
+        // console.log(`gameState\n${this.gameState.toString()}`);
+
+        this.updateBoard();
+    }
+
+    private newGameState() {
+        return new GameState(this.copyIntersections(), this.turn, this.gameState);
+    }
+
+    private updateBoard() {
+        const {
+            board,
+            intersections
+        } = this;
+
+        board.drawStones(intersections);
+        // board.printStones();
+    }
+
+    private loadGameState(state: GameState) {
+        const {
+            xLines,
+            yLines,
+            intersections
+        } = this;
+
+        this.setTurn(state.turn);
+
+        for(let x = 0; x < xLines; x++) {
+            for(let y = 0; y < yLines; y++) {
+                intersections[x][y].stone = state.intersections[x][y].stone
+            }
+        }
+
+        this.gameState = state;
+    }
+
     private checkForKo(): boolean {
         const {
             xLines,
             yLines,
             intersections,
-            prevGameState: {
+            gameState: {
                 prevGameState
             }
         } = this;
+
+        if(prevGameState == null) {
+            return false;
+        }
 
         for(let x = 0; x < xLines; x++) {
             for(let y = 0; y < yLines; y++) {
@@ -398,25 +471,6 @@ export class Game {
             return null;
         }
     }
-
-    private nextTurn() {
-        if(this.turn === Stone.Black) {
-            this.setTurn(Stone.White);
-        }
-        else {
-            this.setTurn(Stone.Black);
-        }
-    }
-
-    private updateBoard() {
-        const {
-            board,
-            intersections
-        } = this;
-
-        board.drawStones(intersections);
-        // board.printStones();
-    }
 }
 
 class GameState {
@@ -425,12 +479,30 @@ class GameState {
     prevGameState: GameState;
 
     constructor(ints: Intersection[][], t: Stone, prev: GameState = null) {
-        this.intersections = ints;
         this.turn = t;
         this.prevGameState = prev;
+        this.intersections = ints;
     }
 
-    newGameState(intersections: Intersection[][], turn: Stone): GameState {
+    public newGameState(intersections: Intersection[][], turn: Stone): GameState {
         return new GameState(intersections, turn, this);
+    }
+
+    public toString(): string {
+        const transposed = transpose<Intersection>(this.intersections);
+        
+        return transposed.map(col => {
+            return col.map(i => {
+                if(i.stone == Stone.Black) {
+                    return 'b';
+                }
+                else if(i.stone == Stone.White) {
+                    return 'w';
+                }
+                else {
+                    return '-'
+                }
+            }).join(' ');
+        }).join('\n');
     }
 }
