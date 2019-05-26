@@ -3,6 +3,12 @@ g.lines line {
     shape-rendering: crispEdges;
 }
 
+g.dots circle.dot {
+    fill: black;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
 .overlay-int {
     stroke: none;
     fill: transparent;

@@ -54,9 +54,39 @@ export class Board {
 
     public draw(intersections: Intersection[][]) {
         this.drawGrid(intersections);
+        this.drawHandicapPoints();
+
         this.boardElement.append('g').attr('class', 'intersections');
         this.boardElement.append('g').attr('class', 'overlay');
+
         this.drawStones(intersections);
+    }
+
+    private drawHandicapPoints() {
+        if(this.xLines == 19 && this.yLines == 19) {
+            const points = [
+                [3, 3],
+                [9, 3],
+                [15, 3],
+                [3, 9],
+                [9, 9],
+                [15, 9],
+                [3, 15],
+                [9, 15],
+                [15, 15],
+            ];
+
+            const dots = this.boardElement.append('g').attr('class', 'dots');
+
+            dots.selectAll('circle.dot')
+                .data(points)
+                    .enter()
+                    .append('circle')
+                        .attr('class', 'dot')
+                        .attr('cx', d => this.getBoardX(d[0]))
+                        .attr('cy', d => this.getBoardY(d[1]))
+                        .attr('r', this.stoneRadius / 6);
+        }
     }
 
     private drawGrid(intersections: Intersection[][]) {
@@ -216,7 +246,7 @@ export class Game {
         return ints;
     }
 
-    // Auto place stones randomly for performance testing
+    // Can be used to place stones randomly for performance testing
     static autoPlacement(game: Game, amount: number) {
         let running = false;
         let numPlaced = 0;

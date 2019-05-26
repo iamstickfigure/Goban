@@ -5,5 +5,5 @@ window.onload = () => {
     const game = new Game();
     game.initDisplay();
 
-    Game.autoPlacement(game, 1000);
+    // Game.autoPlacement(game, 1000);
 }
