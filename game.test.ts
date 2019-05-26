@@ -368,6 +368,11 @@ test('makeMove: game states are tracked', () => {
     expect(placed2).toBe(true);
     expect(placed3).toBe(true);
 
+    expect(gameState3.moveNum).toBe(3);
+    expect(gameState2.moveNum).toBe(2);
+    expect(gameState1.moveNum).toBe(1);
+    expect(gameState0.moveNum).toBe(0);
+    
     expect(gameState3.intersections).toEqual(expectedState3);
     expect(gameState2.intersections).toEqual(expectedState2);
     expect(gameState1.intersections).toEqual(expectedState1);
