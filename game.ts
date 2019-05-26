@@ -223,6 +223,8 @@ export class Game {
     private xLines: number = 19;
     private yLines: number = 19;
     private turn: Stone = Stone.Black;
+    private blackScore: number = 0;
+    private whiteScore: number = 0;
 
     constructor(xLines: number = 19, yLines: number = 19) {
         this.xLines = xLines;
@@ -362,9 +364,12 @@ export class Game {
 
         if(legalMove) {
             // Move is legal so far, so continue on.
+            let numCaptured = 0;
+
             for(let captured of capturedNeighbors) {
                 for(let stone of captured) {
                     self.intersections[stone.xPos][stone.yPos].stone = Stone.None;
+                    numCaptured++;
                 }
             }
 
@@ -373,6 +378,15 @@ export class Game {
                 self.loadGameState(self.gameState);
 
                 return false;
+            }
+
+            if(capturedNeighbors.length > 0) {
+                if(self.turn == Stone.Black) {
+                    self.blackScore += numCaptured;
+                }
+                else {
+                    self.whiteScore += numCaptured;
+                }
             }
 
             this.nextTurn();
@@ -403,7 +417,7 @@ export class Game {
     }
 
     private newGameState() {
-        return new GameState(this.copyIntersections(), this.turn, this.gameState);
+        return new GameState(this.copyIntersections(), this.turn, this.blackScore, this.whiteScore, this.gameState);
     }
 
     private updateBoard() {
@@ -550,11 +564,15 @@ class GameState {
     turn: Stone;
     moveNum: number = 0;
     prevGameState: GameState;
+    blackScore: number = 0;
+    whiteScore: number = 0;
 
-    constructor(ints: Intersection[][], t: Stone, prev: GameState = null) {
+    constructor(ints: Intersection[][], t: Stone, bScore: number = 0, wScore: number = 0, prev: GameState = null) {
         this.turn = t;
         this.prevGameState = prev;
         this.intersections = ints;
+        this.blackScore = bScore;
+        this.whiteScore = wScore;
 
         if(prev == null) {
             this.moveNum = 0;
@@ -564,8 +582,8 @@ class GameState {
         }
     }
 
-    public newGameState(intersections: Intersection[][], turn: Stone): GameState {
-        return new GameState(intersections, turn, this);
+    public newGameState(intersections: Intersection[][], turn: Stone, bScore: number = 0, wScore: number = 0): GameState {
+        return new GameState(intersections, turn, bScore, wScore, this);
     }
 
     public toString(): string {

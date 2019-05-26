@@ -372,7 +372,7 @@ test('makeMove: game states are tracked', () => {
     expect(gameState2.moveNum).toBe(2);
     expect(gameState1.moveNum).toBe(1);
     expect(gameState0.moveNum).toBe(0);
-    
+
     expect(gameState3.intersections).toEqual(expectedState3);
     expect(gameState2.intersections).toEqual(expectedState2);
     expect(gameState1.intersections).toEqual(expectedState1);
@@ -407,6 +407,8 @@ test('makeMove: black can capture atari', () => {
     const placed = game["makeMove"](2, 1);
 
     expect(placed).toBe(true);
+    expect(game["blackScore"]).toBe(1);
+    expect(game["whiteScore"]).toBe(0);
     expect(game.intersections[1][1].stone).toEqual(Stone.None);
 });
 
@@ -438,6 +440,8 @@ test('makeMove: white can capture atari', () => {
     const placed = game["makeMove"](2, 1);
 
     expect(placed).toBe(true);
+    expect(game["blackScore"]).toBe(0);
+    expect(game["whiteScore"]).toBe(1);
     expect(game.intersections[1][1].stone).toEqual(Stone.None);
 });
 
@@ -468,6 +472,8 @@ test('makeMove: can capture on edge', () => {
     const placed = game["makeMove"](1, 1);
 
     expect(placed).toBe(true);
+    expect(game["blackScore"]).toBe(1);
+    expect(game["whiteScore"]).toBe(0);
     expect(game.intersections[0][1].stone).toEqual(Stone.None);
 });
 
@@ -496,6 +502,8 @@ test('makeMove: can capture on corner', () => {
     const placed = game["makeMove"](1, 0);
 
     expect(placed).toBe(true);
+    expect(game["blackScore"]).toBe(1);
+    expect(game["whiteScore"]).toBe(0);
     expect(game.intersections[0][0].stone).toEqual(Stone.None);
 });
 
@@ -537,6 +545,8 @@ test('makeMove: multi-capture', () => {
     const placed = game["makeMove"](2, 2);
 
     expect(placed).toBe(true);
+    expect(game["blackScore"]).toBe(4);
+    expect(game["whiteScore"]).toBe(0);
     expect(game.intersections[1][2].stone).toEqual(Stone.None);
     expect(game.intersections[2][1].stone).toEqual(Stone.None);
     expect(game.intersections[2][3].stone).toEqual(Stone.None);
@@ -569,6 +579,8 @@ test('makeMove: Cannot place immediately captured stone', () => {
     const placed = game["makeMove"](1, 1);
 
     expect(placed).toBe(false);
+    expect(game["blackScore"]).toBe(0);
+    expect(game["whiteScore"]).toBe(0);
     expect(game.intersections[1][1].stone).toEqual(Stone.None);
 });
 
@@ -602,6 +614,8 @@ test('makeMove: Can place stone if it will capture stones', () => {
     const placed = game["makeMove"](2, 1);
 
     expect(placed).toBe(true);
+    expect(game["blackScore"]).toBe(1);
+    expect(game["whiteScore"]).toBe(0);
     expect(game.intersections[2][1].stone).toEqual(Stone.Black);
     expect(game.intersections[1][1].stone).toEqual(Stone.None);
 });
@@ -644,6 +658,8 @@ test('makeMove: Cannot place stone if it repeats the previous board state (Ko)',
 
     expect(placed1).toBe(true);
     expect(placed2).toBe(false);
+    expect(game["blackScore"]).toBe(1);
+    expect(game["whiteScore"]).toBe(0);
     expect(game.intersections[2][1].stone).toEqual(Stone.Black);
     expect(game.intersections[1][1].stone).toEqual(Stone.None);
 });
