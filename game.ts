@@ -17,7 +17,7 @@ export enum Stone {
     White
 }
 
-export class Intersection {
+export class Intersection implements Hashable {
     xPos: number;
     yPos: number;
     stone: Stone;
@@ -25,6 +25,10 @@ export class Intersection {
         this.xPos = x;
         this.yPos = y;
         this.stone = Stone.None;
+    }
+    
+    public hashKey(): string {
+        return `(${this.xPos},${this.yPos})`;
     }
 }
 
@@ -526,6 +530,104 @@ export class Game {
         return group;
     }
 
+    private getAllApparentTerritories(): Territory[] {
+        const {
+            xLines,
+            yLines
+        } = this;
+
+        let visited = new HashSet();
+        let territories: Territory[] = [];
+
+        for(let x = 0; x < xLines; x++) {
+            for(let y = 0; y < yLines; y++) {
+                const int = this.getIntersection(x, y);
+
+                if(!visited.includes(int)) {
+                    const territory = this.getApparentTerritory(int, visited);
+
+                    if(territory.owner != Stone.None) {
+                        territories.push(territory);
+                    }
+                }
+            }
+        }
+
+        return territories;
+    }
+
+    private getApparentTerritory(intersection: Intersection, visited: HashSet = null, mode: Pointer<Stone> = null): Territory {
+        if(intersection.stone != Stone.None) {
+            return {
+                owner: Stone.None,
+                region: []
+            };
+        }
+
+        if(visited == null) {
+            visited = new HashSet();
+        }
+
+        if(mode == null) {
+            mode = {
+                value: Stone.None
+            };
+        }
+
+        const self = this;
+        const newNeighbors = self.getAdjacentNeighbors(intersection).filter(int => !visited.includes(int));
+
+        // It's important here that "visited" and "mode" are directly modified, so other branches of execution will see the changes
+        [intersection, ...newNeighbors].forEach(int => visited.insert(int));
+
+        let enclosed = true;
+        let region = [intersection];
+        for(let neighbor of newNeighbors) {
+            if(neighbor == null) {
+                enclosed = true;
+                continue;
+            }
+
+            if(mode.value == Stone.None) {
+                // Assign the mode if one hasn't been found
+                mode.value = neighbor.stone;
+            }
+            
+            if(neighbor.stone == Stone.None) {
+                // Continue checking for more empty space
+                const subGroup = self.getApparentTerritory(neighbor, visited, mode).region;
+                enclosed = enclosed && subGroup.length > 0;
+
+                if(enclosed) {
+                    region = [...region, ...subGroup];
+                }
+            }
+            else if(neighbor.stone == mode.value) {
+                // End of local region
+                enclosed = true;
+            }
+            else if(neighbor.stone != mode.value) {
+                // Neighbor stone doesn't match current mode, so there's no apparent territory here
+                return {
+                    owner: Stone.None,
+                    region: []
+                };
+            }
+
+            if(!enclosed) {
+                return {
+                    owner: Stone.None,
+                    region: []
+                };
+            }
+        }
+
+        return {
+            owner: mode.value,
+            region: region
+        };
+    }
+
     private getOtherPlayer() {
         if(this.turn == Stone.Black) {
             return Stone.White;
@@ -613,4 +715,31 @@ class GameState {
 
         return state;
     }
+}
+
+interface Territory {
+    region: Intersection[];
+    owner: Stone;
+}
+
+class HashSet {
+    private hashSet: {[key: string]: true} = {};
+
+    public includes(item: Hashable): boolean {
+        return item && this.hashSet[item.hashKey()] == true;
+    }
+
+    public insert(item: Hashable) {
+        if(item) {
+            this.hashSet[item.hashKey()] = true;
+        }
+    }
+}
+
+interface Hashable {
+    hashKey: () => string;
+}
+
+interface Pointer<T> {
+    value: T;
 }
