@@ -975,7 +975,7 @@ test('getAllApparentTerritories: area', () => {
     const game = new Game();
 
     /*
-       b  b  b        w  w  w   
+    -  b  b  b        w  w  w   
     b  -  -  -  b  w  -  -  -  w
     b  -  -  -  b  w  -  -  -  w
     b  -  -  -  b  w  -  -  -  w
