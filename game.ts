@@ -62,6 +62,7 @@ export class Board {
         this.drawHandicapPoints();
 
         this.boardElement.append('g').attr('class', 'intersections');
+        this.boardElement.append('g').attr('class', 'territories');
         this.boardElement.append('g').attr('class', 'overlay');
 
         this.drawStones(intersections);
@@ -178,6 +179,39 @@ export class Board {
         });
     }
 
+    public drawTerritories(territories: Territory[]) {
+        const {
+            boardElement,
+            stoneRadius
+        } = this;
+
+        // const allIntersections = intersections.reduce((all, col) => all.concat(col));
+
+        const terries:any = boardElement.select('.territories')
+            .selectAll('.territory')
+            .data(territories);
+            
+        const terry:any = terries.enter()
+            .append('g')
+            .merge(terries)
+                .attr('class', d => `territory ${STONE_CLASSES[d.owner]}`);
+
+        terries.exit().remove();
+
+        const terryPoints = terry.selectAll('circle.territory-marker')
+            .data(d => d.region);
+
+        terryPoints.enter()
+            .append('circle')
+            .merge(terryPoints)
+                .attr('class', `territory-marker`)
+                .attr('cx', d => this.getBoardX(d.xPos))
+                .attr('cy', d => this.getBoardY(d.yPos))
+                .attr('r', stoneRadius/2);
+
+        terryPoints.exit().remove();
+    }
+
     public printStones(intersections: Intersection[][]) {
         const {
             xLines,
@@ -253,13 +287,17 @@ export class Game {
         return ints;
     }
 
+    static makeGlobal(game: Game) {
+        window["game"] = game;
+    }
+
     // Can be used to place stones randomly for performance testing
     static autoPlacement(game: Game, amount: number) {
         let running = false;
         let numPlaced = 0;
         let maxTime = 0;
 
-        window["game"] = game;
+        Game.makeGlobal(game);
 
         const int = setInterval(() => {
             if(!running) {
