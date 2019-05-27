@@ -41,6 +41,7 @@ export class Board {
     private xLines: number = 19;
     private yLines: number = 19;
     private turn: Stone = Stone.Black;
+    private territoryMode: boolean = false;
     private makeMove: Function;
 
     constructor(boardElement: Selection, width: number, height: number, xLines: number, yLines: number, makeMove: Function) {
@@ -164,18 +165,35 @@ export class Board {
             .attr('height', stoneRadius*2);
 
         overlayInts.on('mouseover', function(d) {
-            d3.select(this)
-                .append('circle')
-                .attr('class', `highlight stone ${STONE_CLASSES[self.turn]}`)
-                .attr('cx', self.getBoardX(d.xPos))
-                .attr('cy', self.getBoardY(d.yPos))
-                .attr('r', stoneRadius);
+            if(self.territoryMode && d.stone != Stone.None) {
+                const otherPlayer = d.stone == Stone.Black ? Stone.White : Stone.Black;
+
+                d3.select(this)
+                    .append('circle')
+                    .attr('class', `highlight stone ${STONE_CLASSES[otherPlayer]}`)
+                    .attr('cx', self.getBoardX(d.xPos))
+                    .attr('cy', self.getBoardY(d.yPos))
+                    .attr('r', stoneRadius/2);
+            }
+            else if(!self.territoryMode && d.stone == Stone.None) {
+                d3.select(this)
+                    .append('circle')
+                    .attr('class', `highlight stone ${STONE_CLASSES[self.turn]}`)
+                    .attr('cx', self.getBoardX(d.xPos))
+                    .attr('cy', self.getBoardY(d.yPos))
+                    .attr('r', stoneRadius);
+            }
         }).on('mouseout', function() {
             d3.select(this)
                 .select('circle.highlight')
                 .remove();
         }).on('click', function(d) {
-            self.makeMove(d.xPos, d.yPos);
+            if(self.territoryMode && d.stone != Stone.None) {
+
+            }
+            else if(!self.territoryMode && d.stone == Stone.None) {
+                self.makeMove(d.xPos, d.yPos);
+            }
         });
     }
 
