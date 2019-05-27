@@ -22,10 +22,10 @@ export class Intersection implements Hashable {
     xPos: number;
     yPos: number;
     stone: Stone;
-    constructor(x, y) {
+    constructor(x: number, y: number, s: Stone = Stone.None) {
         this.xPos = x;
         this.yPos = y;
-        this.stone = Stone.None;
+        this.stone = s;
     }
     
     public hashKey(): string {
@@ -615,10 +615,7 @@ export class Game {
 
     private getApparentTerritory(intersection: Intersection, visited: HashSet = null, greedy: boolean = false, mode: Pointer<Stone> = null): Territory {
         if(intersection.stone != Stone.None) {
-            return {
-                owner: Stone.None,
-                region: []
-            };
+            return new Territory(Stone.None, []);
         }
 
         if(visited == null) {
@@ -641,7 +638,7 @@ export class Game {
             }
         });
 
-        let region = [intersection];
+        let territory = new Territory(Stone.None, [intersection]);
         for(let neighbor of newNeighbors) {
             if(neighbor == null) {
                 // End of local region
@@ -658,7 +655,7 @@ export class Game {
                 const subTerritory = self.getApparentTerritory(neighbor, visited, greedy, mode);
 
                 if(subTerritory.owner != Stone.Unknown) {
-                    region = [...region, ...subTerritory.region];
+                    territory = territory.merge(subTerritory)
                 }
             }
             else if(neighbor.stone == mode.value) {
@@ -678,20 +675,72 @@ export class Game {
         }
 
         if(mode.value == Stone.Unknown) {
-            return {
-                owner: Stone.Unknown,
-                region: []
-            };
+            return new Territory(Stone.Unknown, []);
         }
 
-        return {
-            owner: mode.value,
-            region: region
-        };
+        return new Territory(mode.value, territory.region);
     }
 
-    private getOtherPlayer() {
-        if(this.turn == Stone.Black) {
+    private getTerritory(intersection: Intersection, mode: Stone, visited: HashSet = null, greedy: boolean = false): Territory {
+        if(intersection.stone == mode) {
+            return new Territory(Stone.None, []);
+        }
+
+        if(visited == null) {
+            visited = new HashSet();
+        }
+
+        const self = this;
+        const newNeighbors = self.getAdjacentNeighbors(intersection).filter(int => !visited.includes(int));
+
+        // It's important here that "visited" is directly modified, so other branches of execution will see the changes
+        [intersection, ...newNeighbors].forEach(int => {
+            if(int != null && int.stone != mode) {
+                visited.insert(int);
+            }
+        });
+
+        let territory = new Territory(mode, [intersection]);
+        for(let neighbor of newNeighbors) {
+            if(neighbor == null) {
+                // End of local region
+                continue;
+            }
+
+            if(neighbor.stone != mode) {
+                // Continue checking for more territory
+                const subTerritory = self.getTerritory(neighbor, mode, visited, greedy);
+
+                territory = territory.merge(subTerritory);
+            }
+            else if(neighbor.stone == mode) {
+                // End of local region
+                continue;
+            }
+
+            // if(!greedy && mode.value == Stone.Unknown) {
+            //     // If greedy is true, set the mode to unknown, but don't stop filling the rest of the region
+            //     // If greedy is false, break early if the mode becomes unknown
+            //     break;
+            // }
+        }
+
+        // if(mode.value == Stone.Unknown) {
+        //     return {
+        //         owner: Stone.Unknown,
+        //         region: []
+        //     };
+        // }
+
+        return territory;
+    }
+
+    private getOtherPlayer(turn?: Stone) {
+        if(turn == undefined) {
+            turn = this.turn;
+        }
+
+        if(turn == Stone.Black) {
             return Stone.White;
         } 
         else {
@@ -779,9 +828,41 @@ class GameState {
     }
 }
 
-interface Territory {
+export class Territory {
     region: Intersection[];
     owner: Stone;
+    score: number = 0;
+
+    constructor(owner: Stone, region?: Intersection[]) {
+        this.owner = owner;
+
+        if(region !== undefined) {
+            this.region = region;
+            this.score = region.reduce((total, int) => total + (int.stone == Stone.None ? 1 : 2), 0);
+        }
+    }
+
+    public merge(territory: Territory): Territory {
+        let merged = new Territory(Stone.None);
+
+        if(this.owner == Stone.None) {
+            merged.owner = territory.owner;
+        }
+        else if(territory.owner == Stone.None) {
+            merged.owner = this.owner;
+        }
+        else if(this.owner != territory.owner) {
+            merged.owner = Stone.Unknown;
+        }
+        else {
+            merged.owner = this.owner;
+        }
+
+        merged.region = [...this.region, ...territory.region];
+        merged.score = this.score + territory.score;
+
+        return merged;
+    }
 }
 
 class HashSet {

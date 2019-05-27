@@ -1,10 +1,26 @@
 import * as puppeteer from 'puppeteer';
-import { Board, Game, Stone, Intersection } from './game';
+import { Board, Game, Stone, Intersection, Territory } from './game';
 
 test('stoneRadius', () => {
     const board = new Board(null, 38, 38, 19, 19, null);
 
     expect(board.stoneRadius).toBe(1);
+});
+
+test('Intersection: stone', () => {
+    const int = new Intersection(0, 0, Stone.Black);
+
+    expect(int.xPos).toBe(0);
+    expect(int.yPos).toBe(0);
+    expect(int.stone).toBe(Stone.Black);
+});
+
+test('Intersection: empty', () => {
+    const int = new Intersection(0, 0);
+
+    expect(int.xPos).toBe(0);
+    expect(int.yPos).toBe(0);
+    expect(int.stone).toBe(Stone.None);
 });
 
 // test('placing stones correctly', async () => {
@@ -664,6 +680,145 @@ test('makeMove: Cannot place stone if it repeats the previous board state (Ko)',
     expect(game.intersections[1][1].stone).toEqual(Stone.None);
 });
 
+test('Territory: new territory', () => {
+    const territory = new Territory(Stone.Black, [
+        new Intersection(0, 0),
+        new Intersection(0, 1, Stone.White)
+    ]);
+
+    expect(territory.owner).toBe(Stone.Black);
+    expect(territory.region).toHaveLength(2);
+    expect(territory.score).toBe(3);
+});
+
+test('Territory: merge', () => {
+    const territory1 = new Territory(Stone.Black, [
+        new Intersection(0, 0),
+        new Intersection(0, 1, Stone.White)
+    ]);
+    const territory2 = new Territory(Stone.Black, [
+        new Intersection(0, 2, Stone.White),
+        new Intersection(0, 3, Stone.White),
+        new Intersection(0, 4)
+    ]);
+
+    const merged = territory1.merge(territory2);
+
+    expect(merged.owner).toBe(Stone.Black);
+    expect(merged.region).toHaveLength(5);
+    expect(merged.score).toBe(8);
+});
+
+test('Territory: merge (same owner)', () => {
+    const territory1 = new Territory(Stone.Black, []);
+    const territory2 = new Territory(Stone.Black, []);
+
+    const merged = territory1.merge(territory2);
+
+    expect(merged.owner).toBe(Stone.Black);
+    expect(merged.region).toHaveLength(0);
+    expect(merged.score).toBe(0);
+});
+
+test('Territory: merge (orig is none)', () => {
+    const territory1 = new Territory(Stone.None, []);
+    const territory2 = new Territory(Stone.Black, []);
+
+    const merged = territory1.merge(territory2);
+
+    expect(merged.owner).toBe(Stone.Black);
+    expect(merged.region).toHaveLength(0);
+    expect(merged.score).toBe(0);
+});
+
+test('Territory: merge (new is none)', () => {
+    const territory1 = new Territory(Stone.Black, []);
+    const territory2 = new Territory(Stone.None, []);
+
+    const merged = territory1.merge(territory2);
+
+    expect(merged.owner).toBe(Stone.Black);
+    expect(merged.region).toHaveLength(0);
+    expect(merged.score).toBe(0);
+});
+
+test('Territory: merge (both are none)', () => {
+    const territory1 = new Territory(Stone.None, []);
+    const territory2 = new Territory(Stone.None, []);
+
+    const merged = territory1.merge(territory2);
+
+    expect(merged.owner).toBe(Stone.None);
+    expect(merged.region).toHaveLength(0);
+    expect(merged.score).toBe(0);
+});
+
+test('Territory: merge (owners are different)', () => {
+    const territory1 = new Territory(Stone.Black, []);
+    const territory2 = new Territory(Stone.White, []);
+
+    const merged = territory1.merge(territory2);
+
+    expect(merged.owner).toBe(Stone.Unknown);
+    expect(merged.region).toHaveLength(0);
+    expect(merged.score).toBe(0);
+});
+
+test('Territory: merge (orig is unknown)', () => {
+    const territory1 = new Territory(Stone.Unknown, []);
+    const territory2 = new Territory(Stone.Black, []);
+
+    const merged = territory1.merge(territory2);
+
+    expect(merged.owner).toBe(Stone.Unknown);
+    expect(merged.region).toHaveLength(0);
+    expect(merged.score).toBe(0);
+});
+
+test('Territory: merge (new is unknown)', () => {
+    const territory1 = new Territory(Stone.Black, []);
+    const territory2 = new Territory(Stone.Unknown, []);
+
+    const merged = territory1.merge(territory2);
+
+    expect(merged.owner).toBe(Stone.Unknown);
+    expect(merged.region).toHaveLength(0);
+    expect(merged.score).toBe(0);
+});
+
+test('Territory: merge (both are unknown)', () => {
+    const territory1 = new Territory(Stone.Unknown, []);
+    const territory2 = new Territory(Stone.Unknown, []);
+
+    const merged = territory1.merge(territory2);
+
+    expect(merged.owner).toBe(Stone.Unknown);
+    expect(merged.region).toHaveLength(0);
+    expect(merged.score).toBe(0);
+});
+
+test('Territory: merge (none and unknown)', () => {
+    const territory1 = new Territory(Stone.None, []);
+    const territory2 = new Territory(Stone.Unknown, []);
+
+    const merged = territory1.merge(territory2);
+
+    expect(merged.owner).toBe(Stone.Unknown);
+    expect(merged.region).toHaveLength(0);
+    expect(merged.score).toBe(0);
+});
+
+test('Territory: merge (unknown and none)', () => {
+    const territory1 = new Territory(Stone.Unknown, []);
+    const territory2 = new Territory(Stone.None, []);
+
+    const merged = territory1.merge(territory2);
+
+    expect(merged.owner).toBe(Stone.Unknown);
+    expect(merged.region).toHaveLength(0);
+    expect(merged.score).toBe(0);
+});
+
 test('getApparentTerritory: black enclosed', () => {
     const game = new Game();
 
@@ -683,6 +838,7 @@ test('getApparentTerritory: black enclosed', () => {
     expect(territory.owner).toBe(Stone.Black);
     expect(territory.region).toHaveLength(1);
     expect(territory.region).toContain(game.intersections[1][1]);
+    expect(territory.score).toEqual(1);
 });
 
 test('getApparentTerritory: white enclosed', () => {
@@ -704,6 +860,7 @@ test('getApparentTerritory: white enclosed', () => {
     expect(territory.owner).toBe(Stone.White);
     expect(territory.region).toHaveLength(1);
     expect(territory.region).toContain(game.intersections[1][1]);
+    expect(territory.score).toEqual(1);
 });
 
 test('getApparentTerritory: edge', () => {
@@ -724,6 +881,7 @@ test('getApparentTerritory: edge', () => {
     expect(territory.owner).toBe(Stone.Black);
     expect(territory.region).toHaveLength(1);
     expect(territory.region).toContain(game.intersections[0][1]);
+    expect(territory.score).toEqual(1);
 });
 
 test('getApparentTerritory: corner', () => {
@@ -742,6 +900,7 @@ test('getApparentTerritory: corner', () => {
     expect(territory.owner).toBe(Stone.Black);
     expect(territory.region).toHaveLength(1);
     expect(territory.region).toContain(game.intersections[0][0]);
+    expect(territory.score).toEqual(1);
 });
 
 test('getApparentTerritory: multiple enclosed', () => {
@@ -769,6 +928,7 @@ test('getApparentTerritory: multiple enclosed', () => {
     expect(territory.region).toContain(game.intersections[1][1]);
     expect(territory.region).toContain(game.intersections[2][1]);
     expect(territory.region).toContain(game.intersections[3][1]);
+    expect(territory.score).toEqual(3);
 });
 
 test('getApparentTerritory: no apparent territory', () => {
@@ -795,6 +955,7 @@ test('getApparentTerritory: no apparent territory', () => {
 
     expect(territory.owner).toBe(Stone.Unknown);
     expect(territory.region).toHaveLength(0);
+    expect(territory.score).toEqual(0);
 });
 
 test('getApparentTerritory: odd shape', () => {
@@ -833,6 +994,7 @@ test('getApparentTerritory: odd shape', () => {
     expect(territory.region).toContain(game.intersections[1][3]);
     expect(territory.region).toContain(game.intersections[2][3]);
     expect(territory.region).toContain(game.intersections[3][3]);
+    expect(territory.score).toEqual(7);
 });
 
 test('getApparentTerritory: odd shape (no apparent territory)', () => {
@@ -866,6 +1028,7 @@ test('getApparentTerritory: odd shape (no apparent territory)', () => {
 
     expect(territory.owner).toBe(Stone.Unknown);
     expect(territory.region).toHaveLength(0);
+    expect(territory.score).toEqual(0);
 });
 
 test('getApparentTerritory: circle', () => {
@@ -905,6 +1068,7 @@ test('getApparentTerritory: circle', () => {
     expect(territory.region).toContain(game.intersections[1][3]);
     expect(territory.region).toContain(game.intersections[2][3]);
     expect(territory.region).toContain(game.intersections[3][3]);
+    expect(territory.score).toEqual(8);
 });
 
 test('getApparentTerritory: area', () => {
@@ -944,6 +1108,7 @@ test('getApparentTerritory: area', () => {
     expect(territory.region).toContain(game.intersections[2][3]);
     expect(territory.region).toContain(game.intersections[3][3]);
     expect(territory.region).toContain(game.intersections[2][2]);
+    expect(territory.score).toEqual(9);
 });
 
 test('getApparentTerritory: not captured', () => {
@@ -969,6 +1134,7 @@ test('getApparentTerritory: not captured', () => {
     expect(territory.region).toContain(game.intersections[0][2]);
     expect(territory.region).toContain(game.intersections[1][2]);
     expect(territory.region).toContain(game.intersections[2][2]);
+    expect(territory.score).toEqual(8);
 });
 
 test('getAllApparentTerritories: area', () => {
@@ -1026,6 +1192,7 @@ test('getAllApparentTerritories: area', () => {
     expect(territory1.owner).toBe(Stone.Black);
     expect(territory1.region).toHaveLength(1);
     expect(territory1.region).toContain(game.intersections[0][0]);
+    expect(territory1.score).toEqual(1);
 
     expect(territory2.owner).toBe(Stone.Black);
     expect(territory2.region).toHaveLength(9);
@@ -1038,6 +1205,7 @@ test('getAllApparentTerritories: area', () => {
     expect(territory2.region).toContain(game.intersections[2][3]);
     expect(territory2.region).toContain(game.intersections[3][3]);
     expect(territory2.region).toContain(game.intersections[2][2]);
+    expect(territory2.score).toEqual(9);
 
     expect(territory3.owner).toBe(Stone.White);
     expect(territory3.region).toHaveLength(9);
@@ -1050,4 +1218,397 @@ test('getAllApparentTerritories: area', () => {
     expect(territory3.region).toContain(game.intersections[8][1]);
     expect(territory3.region).toContain(game.intersections[8][2]);
     expect(territory3.region).toContain(game.intersections[8][3]);
+    expect(territory3.score).toEqual(9);
+});
+
+test('getTerritory: black encloses white', () => {
+    const game = new Game();
+
+    /*
+       b
+    b  W  b
+       b
+    */
+
+    game.intersections[1][0].stone = Stone.Black;
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[1][2].stone = Stone.Black;
+    game.intersections[2][1].stone = Stone.Black;
+
+    game.intersections[1][1].stone = Stone.White;
+
+    const territory = game['getTerritory'](game.intersections[1][1], Stone.Black);
+
+    expect(territory.owner).toBe(Stone.Black);
+    expect(territory.region).toHaveLength(1);
+    expect(territory.region).toContain(game.intersections[1][1]);
+    expect(territory.score).toEqual(2);
+});
+
+test('getTerritory: white encloses black', () => {
+    const game = new Game();
+
+    /*
+       w
+    w  B  w
+       w
+    */
+
+    game.intersections[1][0].stone = Stone.White;
+    game.intersections[0][1].stone = Stone.White;
+    game.intersections[1][2].stone = Stone.White;
+    game.intersections[2][1].stone = Stone.White;
+
+    game.intersections[1][1].stone = Stone.Black;
+
+    const territory = game['getTerritory'](game.intersections[1][1], Stone.White);
+
+    expect(territory.owner).toBe(Stone.White);
+    expect(territory.region).toHaveLength(1);
+    expect(territory.region).toContain(game.intersections[1][1]);
+    expect(territory.score).toEqual(2);
+});
+
+test('getTerritory: black enclosed empty', () => {
+    const game = new Game();
+
+    /*
+       b
+    b  +  b
+       b
+    */
+
+    game.intersections[1][0].stone = Stone.Black;
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[1][2].stone = Stone.Black;
+    game.intersections[2][1].stone = Stone.Black;
+
+    const territory = game['getTerritory'](game.intersections[1][1], Stone.Black);
+
+    expect(territory.owner).toBe(Stone.Black);
+    expect(territory.region).toHaveLength(1);
+    expect(territory.region).toContain(game.intersections[1][1]);
+    expect(territory.score).toEqual(1);
+});
+
+test('getTerritory: white enclosed empty', () => {
+    const game = new Game();
+
+    /*
+       w
+    w  +  w
+       w
+    */
+
+    game.intersections[1][0].stone = Stone.White;
+    game.intersections[0][1].stone = Stone.White;
+    game.intersections[1][2].stone = Stone.White;
+    game.intersections[2][1].stone = Stone.White;
+
+    const territory = game['getTerritory'](game.intersections[1][1], Stone.White);
+
+    expect(territory.owner).toBe(Stone.White);
+    expect(territory.region).toHaveLength(1);
+    expect(territory.region).toContain(game.intersections[1][1]);
+    expect(territory.score).toEqual(1);
+});
+
+test('getTerritory: edge', () => {
+    const game = new Game();
+
+    /*
+    b
+    W  b
+    b
+    */
+
+    game.intersections[0][0].stone = Stone.Black;
+    game.intersections[0][2].stone = Stone.Black;
+    game.intersections[1][1].stone = Stone.Black;
+
+    game.intersections[0][1].stone = Stone.White;
+
+    const territory = game['getTerritory'](game.intersections[0][1], Stone.Black);
+
+    expect(territory.owner).toBe(Stone.Black);
+    expect(territory.region).toHaveLength(1);
+    expect(territory.region).toContain(game.intersections[0][1]);
+    expect(territory.score).toEqual(2);
+});
+
+test('getTerritory: corner', () => {
+    const game = new Game();
+
+    /*
+    W  b
+    b
+    */
+
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[1][0].stone = Stone.Black;
+
+    game.intersections[0][0].stone = Stone.White;
+
+    const territory = game['getTerritory'](game.intersections[0][0], Stone.Black);
+
+    expect(territory.owner).toBe(Stone.Black);
+    expect(territory.region).toHaveLength(1);
+    expect(territory.region).toContain(game.intersections[0][0]);
+    expect(territory.score).toEqual(2);
+});
+
+test('getTerritory: multiple enclosed', () => {
+    const game = new Game();
+
+    /*
+       b  b  b
+    b  W  -  -  b
+       b  b  b
+    */
+
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[1][0].stone = Stone.Black;
+    game.intersections[1][2].stone = Stone.Black;
+    game.intersections[2][0].stone = Stone.Black;
+    game.intersections[2][2].stone = Stone.Black;
+    game.intersections[3][0].stone = Stone.Black;
+    game.intersections[3][2].stone = Stone.Black;
+    game.intersections[4][1].stone = Stone.Black;
+
+    game.intersections[1][1].stone = Stone.White;
+
+    const territory = game['getTerritory'](game.intersections[1][1], Stone.Black);
+
+    expect(territory.owner).toBe(Stone.Black);
+    expect(territory.region).toHaveLength(3);
+    expect(territory.region).toContain(game.intersections[1][1]);
+    expect(territory.region).toContain(game.intersections[2][1]);
+    expect(territory.region).toContain(game.intersections[3][1]);
+    expect(territory.score).toEqual(4);
+});
+
+test('getTerritory: multiple enclosed (extra stone)', () => {
+    const game = new Game();
+
+    /*
+       b  b  b
+    b  W  -  w  b
+       b  b  b
+    */
+
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[1][0].stone = Stone.Black;
+    game.intersections[1][2].stone = Stone.Black;
+    game.intersections[2][0].stone = Stone.Black;
+    game.intersections[2][2].stone = Stone.Black;
+    game.intersections[3][0].stone = Stone.Black;
+    game.intersections[3][2].stone = Stone.Black;
+    game.intersections[4][1].stone = Stone.Black;
+
+    game.intersections[1][1].stone = Stone.White;
+    game.intersections[3][1].stone = Stone.White;
+
+    const territory = game['getTerritory'](game.intersections[1][1], Stone.Black);
+
+    expect(territory.owner).toBe(Stone.Black);
+    expect(territory.region).toHaveLength(3);
+    expect(territory.region).toContain(game.intersections[1][1]);
+    expect(territory.region).toContain(game.intersections[2][1]);
+    expect(territory.region).toContain(game.intersections[3][1]);
+    expect(territory.score).toEqual(5);
+});
+
+test('getTerritory: odd shape', () => {
+    const game = new Game();
+
+    /*
+       b  b  b
+    b  W  -  -  b
+       b  b  -  b
+    b  -  -  -  b
+       b  b  b
+    */
+
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[0][3].stone = Stone.Black;
+    game.intersections[1][0].stone = Stone.Black;
+    game.intersections[1][2].stone = Stone.Black;
+    game.intersections[1][4].stone = Stone.Black;
+    game.intersections[2][0].stone = Stone.Black;
+    game.intersections[2][2].stone = Stone.Black;
+    game.intersections[2][4].stone = Stone.Black;
+    game.intersections[3][0].stone = Stone.Black;
+    game.intersections[3][4].stone = Stone.Black;
+    game.intersections[4][1].stone = Stone.Black;
+    game.intersections[4][2].stone = Stone.Black;
+    game.intersections[4][3].stone = Stone.Black;
+
+    game.intersections[1][1].stone = Stone.White;
+
+    const territory = game['getTerritory'](game.intersections[1][1], Stone.Black);
+
+    expect(territory.owner).toBe(Stone.Black);
+    expect(territory.region).toHaveLength(7);
+    expect(territory.region).toContain(game.intersections[1][1]);
+    expect(territory.region).toContain(game.intersections[2][1]);
+    expect(territory.region).toContain(game.intersections[3][1]);
+    expect(territory.region).toContain(game.intersections[3][2]);
+    expect(territory.region).toContain(game.intersections[1][3]);
+    expect(territory.region).toContain(game.intersections[2][3]);
+    expect(territory.region).toContain(game.intersections[3][3]);
+    expect(territory.score).toEqual(8);
+});
+
+test('getTerritory: odd shape (extra stone)', () => {
+    const game = new Game();
+
+    /*
+       b  b  b
+    b  W  -  -  b
+       b  b  -  b
+    b  w  -  -  b
+       b  b  b
+    */
+
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[0][3].stone = Stone.Black;
+    game.intersections[1][0].stone = Stone.Black;
+    game.intersections[1][2].stone = Stone.Black;
+    game.intersections[1][4].stone = Stone.Black;
+    game.intersections[2][0].stone = Stone.Black;
+    game.intersections[2][2].stone = Stone.Black;
+    game.intersections[2][4].stone = Stone.Black;
+    game.intersections[3][0].stone = Stone.Black;
+    game.intersections[3][4].stone = Stone.Black;
+    game.intersections[4][1].stone = Stone.Black;
+    game.intersections[4][2].stone = Stone.Black;
+    game.intersections[4][3].stone = Stone.Black;
+
+    game.intersections[1][1].stone = Stone.White;
+    game.intersections[1][3].stone = Stone.White;
+
+    const territory = game['getTerritory'](game.intersections[1][1], Stone.Black);
+
+    expect(territory.owner).toBe(Stone.Black);
+    expect(territory.region).toHaveLength(7);
+    expect(territory.region).toContain(game.intersections[1][1]);
+    expect(territory.region).toContain(game.intersections[2][1]);
+    expect(territory.region).toContain(game.intersections[3][1]);
+    expect(territory.region).toContain(game.intersections[3][2]);
+    expect(territory.region).toContain(game.intersections[1][3]);
+    expect(territory.region).toContain(game.intersections[2][3]);
+    expect(territory.region).toContain(game.intersections[3][3]);
+    expect(territory.score).toEqual(9);
+});
+
+test('getTerritory: circle', () => {
+    const game = new Game();
+
+    /*
+       b  b  b
+    b  W  -  -  b
+    b  -  b  -  b
+    b  -  -  -  b
+       b  b  b
+    */
+
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[0][2].stone = Stone.Black;
+    game.intersections[0][3].stone = Stone.Black;
+    game.intersections[1][0].stone = Stone.Black;
+    game.intersections[1][4].stone = Stone.Black;
+    game.intersections[2][0].stone = Stone.Black;
+    game.intersections[2][2].stone = Stone.Black;
+    game.intersections[2][4].stone = Stone.Black;
+    game.intersections[3][0].stone = Stone.Black;
+    game.intersections[3][4].stone = Stone.Black;
+    game.intersections[4][1].stone = Stone.Black;
+    game.intersections[4][2].stone = Stone.Black;
+    game.intersections[4][3].stone = Stone.Black;
+
+    game.intersections[1][1].stone = Stone.White;
+
+    const territory = game['getTerritory'](game.intersections[1][1], Stone.Black);
+
+    expect(territory.owner).toBe(Stone.Black);
+    expect(territory.region).toHaveLength(8);
+    expect(territory.region).toContain(game.intersections[1][1]);
+    expect(territory.region).toContain(game.intersections[2][1]);
+    expect(territory.region).toContain(game.intersections[3][1]);
+    expect(territory.region).toContain(game.intersections[1][2]);
+    expect(territory.region).toContain(game.intersections[3][2]);
+    expect(territory.region).toContain(game.intersections[1][3]);
+    expect(territory.region).toContain(game.intersections[2][3]);
+    expect(territory.region).toContain(game.intersections[3][3]);
+    expect(territory.score).toEqual(9);
+});
+
+test('getTerritory: area', () => {
+    const game = new Game();
+
+    /*
+       b  b  b
+    b  W  -  -  b
+    b  -  -  -  b
+    b  -  -  -  b
+       b  b  b
+    */
+
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[0][2].stone = Stone.Black;
+    game.intersections[0][3].stone = Stone.Black;
+    game.intersections[1][0].stone = Stone.Black;
+    game.intersections[1][4].stone = Stone.Black;
+    game.intersections[2][0].stone = Stone.Black;
+    game.intersections[2][4].stone = Stone.Black;
+    game.intersections[3][0].stone = Stone.Black;
+    game.intersections[3][4].stone = Stone.Black;
+    game.intersections[4][1].stone = Stone.Black;
+    game.intersections[4][2].stone = Stone.Black;
+    game.intersections[4][3].stone = Stone.Black;
+
+    game.intersections[1][1].stone = Stone.White;
+
+    const territory = game['getTerritory'](game.intersections[1][1], Stone.Black);
+
+    expect(territory.owner).toBe(Stone.Black);
+    expect(territory.region).toHaveLength(9);
+    expect(territory.region).toContain(game.intersections[1][1]);
+    expect(territory.region).toContain(game.intersections[2][1]);
+    expect(territory.region).toContain(game.intersections[3][1]);
+    expect(territory.region).toContain(game.intersections[1][2]);
+    expect(territory.region).toContain(game.intersections[3][2]);
+    expect(territory.region).toContain(game.intersections[1][3]);
+    expect(territory.region).toContain(game.intersections[2][3]);
+    expect(territory.region).toContain(game.intersections[3][3]);
+    expect(territory.region).toContain(game.intersections[2][2]);
+    expect(territory.score).toEqual(10);
+});
+
+test('getTerritory: most of board', () => {
+    const game = new Game(3, 3);
+
+    /*
+    W  b   
+    -  -  b
+    -  -  w
+    */
+
+    game.intersections[1][0].stone = Stone.Black;
+    game.intersections[2][1].stone = Stone.Black;
+
+    game.intersections[0][0].stone = Stone.White;
+    game.intersections[2][2].stone = Stone.White;
+
+    const territory = game['getTerritory'](game.intersections[0][0], Stone.Black);
+
+    expect(territory.owner).toBe(Stone.Black);
+    expect(territory.region).toHaveLength(6);
+    expect(territory.region).toContain(game.intersections[0][0]);
+    expect(territory.region).toContain(game.intersections[0][1]);
+    expect(territory.region).toContain(game.intersections[1][1]);
+    expect(territory.region).toContain(game.intersections[0][2]);
+    expect(territory.region).toContain(game.intersections[1][2]);
+    expect(territory.region).toContain(game.intersections[2][2]);
+    expect(territory.score).toEqual(8);
 });
