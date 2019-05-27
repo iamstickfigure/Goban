@@ -12,6 +12,7 @@ export const STONE_CLASSES = [
 ];
 
 export enum Stone {
+    Unknown = -1,
     None = 0,
     Black,
     White
@@ -543,10 +544,10 @@ export class Game {
             for(let y = 0; y < yLines; y++) {
                 const int = this.getIntersection(x, y);
 
-                if(!visited.includes(int)) {
-                    const territory = this.getApparentTerritory(int, visited);
+                if(int.stone == Stone.None && !visited.includes(int)) {
+                    const territory = this.getApparentTerritory(int, visited, true);
 
-                    if(territory.owner != Stone.None) {
+                    if(territory.owner != Stone.Unknown) {
                         territories.push(territory);
                     }
                 }
@@ -556,7 +557,7 @@ export class Game {
         return territories;
     }
 
-    private getApparentTerritory(intersection: Intersection, visited: HashSet = null, mode: Pointer<Stone> = null): Territory {
+    private getApparentTerritory(intersection: Intersection, visited: HashSet = null, greedy: boolean = false, mode: Pointer<Stone> = null): Territory {
         if(intersection.stone != Stone.None) {
             return {
                 owner: Stone.None,
@@ -578,13 +579,16 @@ export class Game {
         const newNeighbors = self.getAdjacentNeighbors(intersection).filter(int => !visited.includes(int));
 
         // It's important here that "visited" and "mode" are directly modified, so other branches of execution will see the changes
-        [intersection, ...newNeighbors].forEach(int => visited.insert(int));
+        [intersection, ...newNeighbors].forEach(int => {
+            if(int != null && int.stone == Stone.None) {
+                visited.insert(int);
+            }
+        });
 
-        let enclosed = true;
         let region = [intersection];
         for(let neighbor of newNeighbors) {
             if(neighbor == null) {
-                enclosed = true;
+                // End of local region
                 continue;
             }
 
@@ -595,31 +599,33 @@ export class Game {
             
             if(neighbor.stone == Stone.None) {
                 // Continue checking for more empty space
-                const subGroup = self.getApparentTerritory(neighbor, visited, mode).region;
-                enclosed = enclosed && subGroup.length > 0;
+                const subTerritory = self.getApparentTerritory(neighbor, visited, greedy, mode);
 
-                if(enclosed) {
-                    region = [...region, ...subGroup];
+                if(subTerritory.owner != Stone.Unknown) {
+                    region = [...region, ...subTerritory.region];
                 }
             }
             else if(neighbor.stone == mode.value) {
                 // End of local region
-                enclosed = true;
+                continue;
             }
             else if(neighbor.stone != mode.value) {
                 // Neighbor stone doesn't match current mode, so there's no apparent territory here
-                return {
-                    owner: Stone.None,
-                    region: []
-                };
+                mode.value = Stone.Unknown;
             }
 
-            if(!enclosed) {
-                return {
-                    owner: Stone.None,
-                    region: []
-                };
+            if(!greedy && mode.value == Stone.Unknown) {
+                // If greedy is true, set the mode to unknown, but don't stop filling the rest of the region
+                // If greedy is false, break early if the mode becomes unknown
+                break;
             }
+        }
+
+        if(mode.value == Stone.Unknown) {
+            return {
+                owner: Stone.Unknown,
+                region: []
+            };
         }
 
         return {
