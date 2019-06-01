@@ -43,8 +43,9 @@ export class Board {
     private turn: Stone = Stone.Black;
     private territoryMode: boolean = false;
     private makeMove: Function;
+    private claimTerritory: Function;
 
-    constructor(boardElement: Selection, width: number, height: number, xLines: number, yLines: number, makeMove: Function) {
+    constructor(boardElement: Selection, width: number, height: number, xLines: number, yLines: number, makeMove: Function, claimTerritory: Function) {
         this.xLines = xLines;
         this.yLines = yLines;
         this.boardElement = boardElement;
@@ -52,6 +53,7 @@ export class Board {
         this.height = height;
         this.stoneRadius = Math.min(width / xLines, height / yLines) / 2;
         this.makeMove = makeMove;
+        this.claimTerritory = claimTerritory;
     }
 
     public setTurn(turn: Stone) {
@@ -189,7 +191,7 @@ export class Board {
                 .remove();
         }).on('click', function(d) {
             if(self.territoryMode && d.stone != Stone.None) {
-
+                self.claimTerritory(d.xPos, d.yPos);
             }
             else if(!self.territoryMode && d.stone == Stone.None) {
                 self.makeMove(d.xPos, d.yPos);
@@ -282,6 +284,8 @@ export class Game {
     private turn: Stone = Stone.Black;
     private blackScore: number = 0;
     private whiteScore: number = 0;
+    private claimedTerritories: Territory[] = [];
+    private claimedTerritoryLookup: HashSet = new HashSet();
 
     constructor(xLines: number = 19, yLines: number = 19) {
         this.xLines = xLines;
@@ -378,13 +382,14 @@ export class Game {
             xLines,
             yLines,
             intersections,
-            makeMove
+            makeMove,
+            claimTerritory
         } = this;
 
         const svg = d3.select('#goban').append('svg');
         const boardElement = svg.append('g').attr('class', 'board');
 
-        this.board = new Board(boardElement, width, height, xLines, yLines, makeMove.bind(this));
+        this.board = new Board(boardElement, width, height, xLines, yLines, makeMove.bind(this), claimTerritory.bind(this));
 
         svg.attr('width', width)
             .attr('height', height);
@@ -491,6 +496,12 @@ export class Game {
         // board.printStones();
     }
 
+    private updateBoardTerritories() {
+        const territories = this.getAllTerritories();
+
+        this.board.drawTerritories(territories);
+    }
+
     private loadGameState(state: GameState) {
         const {
             xLines,
@@ -587,7 +598,42 @@ export class Game {
         return group;
     }
 
-    private getAllApparentTerritories(): Territory[] {
+    private claimTerritory(xPos: number, yPos: number, update: boolean = true): boolean {
+        const self = this;
+        const intersection = self.intersections[xPos][yPos];
+
+        if(intersection.stone == Stone.None || self.claimedTerritoryLookup.includes(intersection)) {
+            return false;
+        }
+
+        const owner = self.getOtherPlayer(self.intersections[xPos][yPos].stone);
+        const territory = self.getTerritory(intersection, owner);
+
+        self.claimedTerritories.push(territory);
+
+        for(let int of territory.region) {
+            self.claimedTerritoryLookup.insert(int);
+        }
+
+        if(update) {
+            self.updateBoardTerritories();
+        }
+
+        return true;
+    }
+
+    private getAllTerritories(): Territory[] {
+        const {
+            claimedTerritories,
+            claimedTerritoryLookup
+        } = this;
+
+        const apparentTerritories = this.getAllApparentTerritories(claimedTerritoryLookup);
+
+        return [...claimedTerritories, ...apparentTerritories];
+    }
+
+    private getAllApparentTerritories(exclude: HashSet = new HashSet()): Territory[] {
         const {
             xLines,
             yLines
@@ -600,7 +646,7 @@ export class Game {
             for(let y = 0; y < yLines; y++) {
                 const int = this.getIntersection(x, y);
 
-                if(int.stone == Stone.None && !visited.includes(int)) {
+                if(int.stone == Stone.None && !visited.includes(int) && !exclude.includes(int)) {
                     const territory = this.getApparentTerritory(int, visited, true);
 
                     if(territory.owner != Stone.Unknown) {
@@ -717,20 +763,7 @@ export class Game {
                 // End of local region
                 continue;
             }
-
-            // if(!greedy && mode.value == Stone.Unknown) {
-            //     // If greedy is true, set the mode to unknown, but don't stop filling the rest of the region
-            //     // If greedy is false, break early if the mode becomes unknown
-            //     break;
-            // }
         }
-
-        // if(mode.value == Stone.Unknown) {
-        //     return {
-        //         owner: Stone.Unknown,
-        //         region: []
-        //     };
-        // }
 
         return territory;
     }
@@ -866,6 +899,7 @@ export class Territory {
 }
 
 class HashSet {
+    // Not exactly a hash set, but it does the job
     private hashSet: {[key: string]: true} = {};
 
     public includes(item: Hashable): boolean {
