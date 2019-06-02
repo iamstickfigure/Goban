@@ -1,5 +1,5 @@
 import * as puppeteer from 'puppeteer';
-import { Board, Game, Stone, Intersection, Territory } from './game';
+import { Board, Game, Stone, Intersection, Territory, Topology, Torus, KleinBottle, RealProjectivePlane, Cylinder, MobiusStrip, Classic } from './game';
 
 test('stoneRadius', () => {
     const board = new Board(null, 38, 38, 19, 19, null, null);
@@ -1807,4 +1807,508 @@ test('getAllTerritories: areas', () => {
     expect(territory7.owner).toBe(Stone.Black);
     expect(territory7.region).toHaveLength(1);
     expect(territory7.score).toEqual(1);
+});
+
+test('Topology.mod: In range', () => {
+    const mod1 = Topology.mod(0, 3);
+    const mod2 = Topology.mod(1, 3);
+
+    expect(mod1).toBe(0);
+    expect(mod2).toBe(1);
+});
+
+test('Topology.mod: Above range', () => {
+    const mod1 = Topology.mod(3, 3);
+    const mod2 = Topology.mod(4, 3);
+
+    expect(mod1).toBe(0);
+    expect(mod2).toBe(1);
+});
+
+test('Topology.mod: Far above range', () => {
+    const mod1 = Topology.mod(6, 3);
+    const mod2 = Topology.mod(100, 3);
+
+    expect(mod1).toBe(0);
+    expect(mod2).toBe(1);
+});
+
+test('Topology.mod: Below range', () => {
+    const mod1 = Topology.mod(-1, 3);
+    const mod2 = Topology.mod(-100, 3);
+
+    expect(mod1).toBe(2);
+    expect(mod2).toBe(2);
+});
+
+test('Topology.flip', () => {
+    const flip0 = Topology.flip(0, 5);
+    const flip1 = Topology.flip(1, 5);
+    const flip2 = Topology.flip(2, 5);
+    const flip3 = Topology.flip(3, 5);
+    const flip4 = Topology.flip(4, 5);
+
+    expect(flip0).toBe(4);
+    expect(flip1).toBe(3);
+    expect(flip2).toBe(2);
+    expect(flip3).toBe(1);
+    expect(flip4).toBe(0);
+});
+
+test('Classic.getIntersection: In range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const classic = new Classic(xLines, yLines);
+
+    const int1 = classic.getIntersection(intersections, 0, 2);
+    const int2 = classic.getIntersection(intersections, 5, 18);
+
+    expect(int1.xPos).toBe(0);
+    expect(int1.yPos).toBe(2);
+    
+    expect(int2.xPos).toBe(5);
+    expect(int2.yPos).toBe(18);
+});
+
+test('Classic.getIntersection: Out of range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const classic = new Classic(xLines, yLines);
+
+    const int1 = classic.getIntersection(intersections, 0, 19);
+    const int2 = classic.getIntersection(intersections, 0, -1);
+    const int3 = classic.getIntersection(intersections, 19 + 1, 18);
+    const int4 = classic.getIntersection(intersections, -1, 18);
+    const int5 = classic.getIntersection(intersections, 19 + 2, 19 + 1);
+    const int6 = classic.getIntersection(intersections, -1, -1);
+
+    expect(int1).toBeNull();
+    expect(int2).toBeNull();
+    expect(int3).toBeNull();
+    expect(int4).toBeNull();
+    expect(int5).toBeNull();
+    expect(int6).toBeNull();
+});
+
+test('Torus.getIntersection: In range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const torus = new Torus(xLines, yLines);
+
+    const int1 = torus.getIntersection(intersections, 0, 2);
+    const int2 = torus.getIntersection(intersections, 5, 18);
+
+    expect(int1.xPos).toBe(0);
+    expect(int1.yPos).toBe(2);
+    
+    expect(int2.xPos).toBe(5);
+    expect(int2.yPos).toBe(18);
+});
+
+test('Torus.getIntersection: Above range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const torus = new Torus(xLines, yLines);
+
+    const int1 = torus.getIntersection(intersections, 0, 19);
+    const int2 = torus.getIntersection(intersections, 19 + 1, 18);
+    const int3 = torus.getIntersection(intersections, 19 + 2, 19 + 1);
+
+    expect(int1.xPos).toBe(0);
+    expect(int1.yPos).toBe(0);
+    
+    expect(int2.xPos).toBe(1);
+    expect(int2.yPos).toBe(18);
+    
+    expect(int3.xPos).toBe(2);
+    expect(int3.yPos).toBe(1);
+});
+
+test('Torus.getIntersection: Far above range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const torus = new Torus(xLines, yLines);
+
+    const int1 = torus.getIntersection(intersections, 0, 19*5);
+    const int2 = torus.getIntersection(intersections, 19*7 + 1, 18);
+    const int3 = torus.getIntersection(intersections, 19*3 + 2, 19*4 + 1);
+
+    expect(int1.xPos).toBe(0);
+    expect(int1.yPos).toBe(0);
+    
+    expect(int2.xPos).toBe(1);
+    expect(int2.yPos).toBe(18);
+    
+    expect(int3.xPos).toBe(2);
+    expect(int3.yPos).toBe(1);
+});
+
+test('Torus.getIntersection: Below range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const torus = new Torus(xLines, yLines);
+
+    const int1 = torus.getIntersection(intersections, 0, -2);
+    const int2 = torus.getIntersection(intersections, -5, 18);
+    const int3 = torus.getIntersection(intersections, -3, -6);
+    const int4 = torus.getIntersection(intersections, -20, -21);
+
+    expect(int1.xPos).toBe(0);
+    expect(int1.yPos).toBe(19 - 2);
+    
+    expect(int2.xPos).toBe(19 - 5);
+    expect(int2.yPos).toBe(18);
+    
+    expect(int3.xPos).toBe(19 - 3);
+    expect(int3.yPos).toBe(19 - 6);
+    
+    expect(int4.xPos).toBe(19*2 - 20);
+    expect(int4.yPos).toBe(19*2 - 21);
+});
+
+test('KleinBottle.getIntersection: In range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const klein = new KleinBottle(xLines, yLines);
+
+    const int1 = klein.getIntersection(intersections, 0, 2);
+    const int2 = klein.getIntersection(intersections, 5, 18);
+
+    expect(int1.xPos).toBe(0);
+    expect(int1.yPos).toBe(2);
+    
+    expect(int2.xPos).toBe(5);
+    expect(int2.yPos).toBe(18);
+});
+
+test('KleinBottle.getIntersection: Above range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const klein = new KleinBottle(xLines, yLines);
+
+    const int1 = klein.getIntersection(intersections, 0, 19);
+    const int2 = klein.getIntersection(intersections, 19 + 1, 18);
+    const int3 = klein.getIntersection(intersections, 19 + 2, 19 + 1);
+
+    expect(int1.xPos).toBe(0);
+    expect(int1.yPos).toBe(0);
+    
+    expect(int2.xPos).toBe(1);
+    expect(int2.yPos).toBe(Topology.flip(18, yLines));
+    
+    expect(int3.xPos).toBe(2);
+    expect(int3.yPos).toBe(Topology.flip(1, yLines));
+});
+
+test('KleinBottle.getIntersection: Far above range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const klein = new KleinBottle(xLines, yLines);
+
+    const int1 = klein.getIntersection(intersections, 0, 19*5);
+    const int2 = klein.getIntersection(intersections, 19*2 + 1, 18); // Flip twice
+    const int3 = klein.getIntersection(intersections, 19*3 + 1, 18); // Flip 3 times
+    const int4 = klein.getIntersection(intersections, 19*7 + 2, 19*5 + 1);  // Flip 7 times
+
+    expect(int1.xPos).toBe(0);
+    expect(int1.yPos).toBe(0);
+    
+    expect(int2.xPos).toBe(1);
+    expect(int2.yPos).toBe(18); // Not flipped
+    
+    expect(int3.xPos).toBe(1);
+    expect(int3.yPos).toBe(Topology.flip(18, yLines)); // Flipped
+    
+    expect(int4.xPos).toBe(2);
+    expect(int4.yPos).toBe(Topology.flip(1, yLines)); // Flipped
+});
+
+test('KleinBottle.getIntersection: Below range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const klein = new KleinBottle(xLines, yLines);
+
+    const int1 = klein.getIntersection(intersections, 0, -2);
+    const int2 = klein.getIntersection(intersections, -5, 18); // Flip
+    const int3 = klein.getIntersection(intersections, -3, -6); // Flip
+    const int4 = klein.getIntersection(intersections, -20, -21); // Flip twice
+
+    expect(int1.xPos).toBe(0);
+    expect(int1.yPos).toBe(19 - 2);
+
+    expect(int2.xPos).toBe(19 - 5);
+    expect(int2.yPos).toBe(Topology.flip(18, yLines)); // Flipped
+
+    expect(int3.xPos).toBe(19 - 3);
+    expect(int3.yPos).toBe(Topology.flip(19 - 6, yLines)); // Flipped
+    
+    expect(int4.xPos).toBe(19*2 - 20);
+    expect(int4.yPos).toBe(19*2 - 21); // Not Flipped
+});
+
+test('RealProjectivePlane.getIntersection: In range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const rpp = new RealProjectivePlane(xLines, yLines);
+
+    const int1 = rpp.getIntersection(intersections, 0, 2);
+    const int2 = rpp.getIntersection(intersections, 5, 18);
+
+    expect(int1.xPos).toBe(0);
+    expect(int1.yPos).toBe(2);
+    
+    expect(int2.xPos).toBe(5);
+    expect(int2.yPos).toBe(18);
+});
+
+test('RealProjectivePlane.getIntersection: Above range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const rpp = new RealProjectivePlane(xLines, yLines);
+
+    const int1 = rpp.getIntersection(intersections, 0, 19);
+    const int2 = rpp.getIntersection(intersections, 19 + 1, 18);
+    const int3 = rpp.getIntersection(intersections, 19 + 2, 19 + 1);
+
+    expect(int1.xPos).toBe(Topology.flip(0, yLines));
+    expect(int1.yPos).toBe(0);
+    
+    expect(int2.xPos).toBe(1);
+    expect(int2.yPos).toBe(Topology.flip(18, yLines));
+    
+    expect(int3.xPos).toBe(Topology.flip(2, xLines));
+    expect(int3.yPos).toBe(Topology.flip(1, yLines));
+});
+
+test('RealProjectivePlane.getIntersection: Far above range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const rpp = new RealProjectivePlane(xLines, yLines);
+
+    const int1 = rpp.getIntersection(intersections, 0, 19*5); // Flip X 5 times
+    const int2 = rpp.getIntersection(intersections, 19*2 + 1, 18); // Flip Y twice
+    const int3 = rpp.getIntersection(intersections, 19*3 + 1, 18); // Flip Y 3 times
+    const int4 = rpp.getIntersection(intersections, 19*7 + 2, 19*5 + 1);  // Flip Y 7 times, Flip X 5 times
+
+    expect(int1.xPos).toBe(Topology.flip(0, xLines)); // Flipped
+    expect(int1.yPos).toBe(0);
+    
+    expect(int2.xPos).toBe(1);
+    expect(int2.yPos).toBe(18); // Not flipped
+    
+    expect(int3.xPos).toBe(1);
+    expect(int3.yPos).toBe(Topology.flip(18, yLines)); // Flipped
+    
+    expect(int4.xPos).toBe(Topology.flip(2, xLines)); // Flipped
+    expect(int4.yPos).toBe(Topology.flip(1, yLines)); // Flipped
+});
+
+test('RealProjectivePlane.getIntersection: Below range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const rpp = new RealProjectivePlane(xLines, yLines);
+
+    const int1 = rpp.getIntersection(intersections, 0, -2); // X Flip
+    const int2 = rpp.getIntersection(intersections, -5, 18); // Y Flip
+    const int3 = rpp.getIntersection(intersections, -3, -6); // X Flip, Y Flip
+    const int4 = rpp.getIntersection(intersections, -20, -21); // Flip X twice, Flip Y twice
+
+    expect(int1.xPos).toBe(Topology.flip(0, xLines)); // Flipped
+    expect(int1.yPos).toBe(19 - 2);
+
+    expect(int2.xPos).toBe(19 - 5);
+    expect(int2.yPos).toBe(Topology.flip(18, yLines)); // Flipped
+
+    expect(int3.xPos).toBe(Topology.flip(19 - 3, xLines));
+    expect(int3.yPos).toBe(Topology.flip(19 - 6, yLines)); // Flipped
+    
+    expect(int4.xPos).toBe(19*2 - 20); // Not Flipped
+    expect(int4.yPos).toBe(19*2 - 21); // Not Flipped
+});
+
+test('Cylinder.getIntersection: In range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const cylinder = new Cylinder(xLines, yLines);
+
+    const int1 = cylinder.getIntersection(intersections, 0, 2);
+    const int2 = cylinder.getIntersection(intersections, 5, 18);
+
+    expect(int1.xPos).toBe(0);
+    expect(int1.yPos).toBe(2);
+    
+    expect(int2.xPos).toBe(5);
+    expect(int2.yPos).toBe(18);
+});
+
+test('Cylinder.getIntersection: Above range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const cylinder = new Cylinder(xLines, yLines);
+
+    const int1 = cylinder.getIntersection(intersections, 0, 19); // Y Out of bounds
+    const int2 = cylinder.getIntersection(intersections, 19 + 1, 18);
+    const int3 = cylinder.getIntersection(intersections, 19 + 2, 19 + 1); // Y Out of bounds
+
+    expect(int1).toBeNull();
+    
+    expect(int2.xPos).toBe(1);
+    expect(int2.yPos).toBe(18);
+    
+    expect(int3).toBeNull();
+});
+
+test('Cylinder.getIntersection: Far above range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const cylinder = new Cylinder(xLines, yLines);
+
+    const int1 = cylinder.getIntersection(intersections, 0, 19*5); // Y Out of bounds
+    const int2 = cylinder.getIntersection(intersections, 19*7 + 1, 18);
+    const int3 = cylinder.getIntersection(intersections, 19*3 + 2, 19*4 + 1); // Y Out of bounds
+
+    expect(int1).toBeNull();
+    
+    expect(int2.xPos).toBe(1);
+    expect(int2.yPos).toBe(18);
+    
+    expect(int3).toBeNull();
+});
+
+test('Cylinder.getIntersection: Below range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const cylinder = new Cylinder(xLines, yLines);
+
+    const int1 = cylinder.getIntersection(intersections, 0, -2); // Y Out of bounds
+    const int2 = cylinder.getIntersection(intersections, -5, 18);
+    const int3 = cylinder.getIntersection(intersections, -3, -6); // Y Out of bounds
+    const int4 = cylinder.getIntersection(intersections, -20, -21); // Y Out of bounds
+
+    expect(int1).toBeNull()
+    
+    expect(int2.xPos).toBe(19 - 5);
+    expect(int2.yPos).toBe(18);
+    
+    expect(int3).toBeNull();
+    
+    expect(int4).toBeNull();
+});
+
+test('MobiusStrip.getIntersection: In range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const mobius = new MobiusStrip(xLines, yLines);
+
+    const int1 = mobius.getIntersection(intersections, 0, 2);
+    const int2 = mobius.getIntersection(intersections, 5, 18);
+
+    expect(int1.xPos).toBe(0);
+    expect(int1.yPos).toBe(2);
+    
+    expect(int2.xPos).toBe(5);
+    expect(int2.yPos).toBe(18);
+});
+
+test('MobiusStrip.getIntersection: Above range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const mobius = new MobiusStrip(xLines, yLines);
+
+    const int1 = mobius.getIntersection(intersections, 0, 19);
+    const int2 = mobius.getIntersection(intersections, 19 + 1, 18);
+    const int3 = mobius.getIntersection(intersections, 19 + 2, 19 + 1); // Y Out of bounds
+
+    expect(int1).toBeNull();
+    
+    expect(int2.xPos).toBe(1);
+    expect(int2.yPos).toBe(Topology.flip(18, yLines));
+    
+    expect(int3).toBeNull();
+});
+
+test('MobiusStrip.getIntersection: Far above range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const mobius = new MobiusStrip(xLines, yLines);
+
+    const int1 = mobius.getIntersection(intersections, 0, 19*5); // Y Out of bounds
+    const int2 = mobius.getIntersection(intersections, 19*2 + 1, 18); // Flip twice
+    const int3 = mobius.getIntersection(intersections, 19*3 + 1, 18); // Flip 3 times
+    const int4 = mobius.getIntersection(intersections, 19*7 + 2, 19*5 + 1); // Y Out of bounds
+
+    expect(int1).toBeNull();
+    
+    expect(int2.xPos).toBe(1);
+    expect(int2.yPos).toBe(18); // Not flipped
+    
+    expect(int3.xPos).toBe(1);
+    expect(int3.yPos).toBe(Topology.flip(18, yLines)); // Flipped
+    
+    expect(int4).toBeNull();
+});
+
+test('MobiusStrip.getIntersection: Below range', () => {
+    const xLines = 19;
+    const yLines = 19;
+    const game = new Game(xLines, yLines);
+    const intersections = game.intersections;
+    const mobius = new MobiusStrip(xLines, yLines);
+
+    const int1 = mobius.getIntersection(intersections, 0, -2); // Y Out of bounds
+    const int2 = mobius.getIntersection(intersections, -5, 18); // Flip
+    const int3 = mobius.getIntersection(intersections, -3, -6); // Y Out of bounds
+    const int4 = mobius.getIntersection(intersections, -20, 6); // Flip twice
+
+    expect(int1).toBeNull();
+
+    expect(int2.xPos).toBe(19 - 5);
+    expect(int2.yPos).toBe(Topology.flip(18, yLines)); // Flipped
+
+    expect(int3).toBeNull();
+    
+    expect(int4.xPos).toBe(19*2 - 20);
+    expect(int4.yPos).toBe(6); // Not Flipped
 });

@@ -898,6 +898,131 @@ export class Territory {
     }
 }
 
+export abstract class Topology {
+    protected xLines: number;
+    protected yLines: number;
+
+    constructor(xLines: number, yLines: number) {
+        this.xLines = xLines;
+        this.yLines = yLines;
+    }
+
+    public abstract getIntersection(intersections: Intersection[][], xPos: number, yPos: number): Intersection;
+
+    public static mod(n: number, m: number): number {
+        // http://mathjs.org/docs/reference/functions/mod.html
+        return n - m * Math.floor(n/m);
+    }
+
+    public static shouldFlip(n: number, m: number): boolean {
+        return Topology.mod(Math.floor(n/m), 2) == 1;
+    }
+
+    public static flip(n: number, m: number): number {
+        return m - n - 1;
+    }
+}
+
+export class Classic extends Topology {
+    public getIntersection(intersections: Intersection[][], xPos: number, yPos: number): Intersection {
+        if(0 <= xPos && xPos < this.xLines && 0 <= yPos && yPos < this.yLines) {
+            return intersections[xPos][yPos];
+        }
+        else {
+            return null;
+        }
+    }
+}
+
+export class Torus extends Topology {
+    public getIntersection(intersections: Intersection[][], xPos: number, yPos: number): Intersection {
+        const {
+            xLines,
+            yLines
+        } = this;
+
+        const xMod = Topology.mod(xPos, xLines);
+        const yMod = Topology.mod(yPos, yLines);
+
+        return intersections[xMod][yMod];
+    }
+}
+
+export class KleinBottle extends Topology {
+    public getIntersection(intersections: Intersection[][], xPos: number, yPos: number): Intersection {
+        const {
+            xLines,
+            yLines
+        } = this;
+
+        const xMod = Topology.mod(xPos, xLines);
+        const yMod = Topology.mod(yPos, yLines);
+
+        const xFlip = Topology.shouldFlip(xPos, xLines);
+        const yFlipped = xFlip ? Topology.flip(yMod, yLines) : yMod;
+
+        return intersections[xMod][yFlipped];
+    }
+}
+
+export class RealProjectivePlane extends Topology {
+    public getIntersection(intersections: Intersection[][], xPos: number, yPos: number): Intersection {
+        const {
+            xLines,
+            yLines
+        } = this;
+
+        const xMod = Topology.mod(xPos, xLines);
+        const yMod = Topology.mod(yPos, yLines);
+
+        const xFlip = Topology.shouldFlip(xPos, xLines);
+        const yFlipped = xFlip ? Topology.flip(yMod, yLines) : yMod;
+
+        const yFlip = Topology.shouldFlip(yPos, yLines);
+        const xFlipped = yFlip ? Topology.flip(xMod, xLines) : xMod;
+
+        return intersections[xFlipped][yFlipped];
+    }
+}
+
+export class Cylinder extends Topology {
+    public getIntersection(intersections: Intersection[][], xPos: number, yPos: number): Intersection {
+        if(0 <= yPos && yPos < this.yLines) {
+            const {
+                xLines,
+            } = this;
+
+            const xMod = Topology.mod(xPos, xLines);
+
+            return intersections[xMod][yPos];
+        }
+        else {
+            return null;
+        }
+    }
+}
+
+export class MobiusStrip extends Topology {
+    public getIntersection(intersections: Intersection[][], xPos: number, yPos: number): Intersection {
+        if(0 <= yPos && yPos < this.yLines) {
+            const {
+                xLines,
+                yLines
+            } = this;
+
+            const xMod = Topology.mod(xPos, xLines);
+
+            const xFlip = Topology.shouldFlip(xPos, xLines);
+            const yFlipped = xFlip ? Topology.flip(yPos, yLines) : yPos;
+
+            return intersections[xMod][yFlipped];
+        }
+        else {
+            return null;
+        }
+    }
+}
+
 class HashSet {
     // Not exactly a hash set, but it does the job
     private hashSet: {[key: string]: true} = {};
