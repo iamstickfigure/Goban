@@ -2312,3 +2312,182 @@ test('MobiusStrip.getIntersection: Below range', () => {
     expect(int4.xPos).toBe(19*2 - 20);
     expect(int4.yPos).toBe(6); // Not Flipped
 });
+
+test('makeMove: Torus topology', () => {
+    const xLines = 7;
+    const yLines = 7;
+    const topology = new Torus(xLines, yLines);
+    const game = new Game(xLines, yLines, topology);
+    const mockBoard:any = {
+        setTurn: () => {},
+        drawStones: () => {}
+    };
+    game.board = mockBoard;
+
+    /*
+    w  B  _  _  _  _  b
+    b  _  _  _  _  _  _
+    _  _  _  _  _  _  b
+    _  _  _  _  _  B  w
+    _  _  _  _  _  _  b
+    _  _  _  _  _  _  _
+    B  _  _  _  _  _  _
+    */
+
+    game.intersections[0][0].stone = Stone.White;
+
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[6][0].stone = Stone.Black;
+
+    game.intersections[6][3].stone = Stone.White;
+
+    game.intersections[6][2].stone = Stone.Black;
+    game.intersections[6][4].stone = Stone.Black;
+
+    // These test stones count as part of a completed turn (So they need to be in the gameState)
+    game["gameState"].intersections = game.copyIntersections();
+
+    let placed: boolean;
+
+    game["setTurn"](Stone.Black);
+    placed = game["makeMove"](1, 0);
+
+    expect(placed).toBe(true);
+    expect(game.intersections[0][0].stone).toEqual(Stone.White);    
+
+    game["setTurn"](Stone.Black);
+    placed = game["makeMove"](0, 6);
+
+    expect(placed).toBe(true);
+    expect(game.intersections[0][0].stone).toEqual(Stone.None);   
+
+    game["setTurn"](Stone.Black);
+    placed = game["makeMove"](5, 3);
+
+    expect(placed).toBe(true);
+    expect(game.intersections[6][3].stone).toEqual(Stone.White);
+
+    expect(game["blackScore"]).toBe(1);
+    expect(game["whiteScore"]).toBe(0);
+});
+
+test('makeMove: KleinBottle topology', () => {
+    const xLines = 7;
+    const yLines = 7;
+    const topology = new KleinBottle(xLines, yLines);
+    const game = new Game(xLines, yLines, topology);
+    const mockBoard:any = {
+        setTurn: () => {},
+        drawStones: () => {}
+    };
+    game.board = mockBoard;
+
+    /*
+    w  B  _  _  _  _  B
+    b  _  _  _  _  _  _
+    _  _  _  _  _  _  b
+    _  _  _  _  _  B  w
+    _  _  _  _  _  _  b
+    _  _  _  _  _  _  _
+    b  _  _  _  _  _  B
+    */
+
+    game.intersections[0][0].stone = Stone.White;
+
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[0][6].stone = Stone.Black;
+
+    game.intersections[6][3].stone = Stone.White;
+
+    game.intersections[6][2].stone = Stone.Black;
+    game.intersections[6][4].stone = Stone.Black;
+
+    // These test stones count as part of a completed turn (So they need to be in the gameState)
+    game["gameState"].intersections = game.copyIntersections();
+
+    let placed: boolean;
+
+    game["setTurn"](Stone.Black);
+    placed = game["makeMove"](1, 0);
+
+    expect(placed).toBe(true);
+    expect(game.intersections[0][0].stone).toEqual(Stone.White);
+
+    game["setTurn"](Stone.Black);
+    placed = game["makeMove"](6, 0);
+
+    expect(placed).toBe(true);
+    expect(game.intersections[0][0].stone).toEqual(Stone.White);
+
+    game["setTurn"](Stone.Black);
+    placed = game["makeMove"](6, 6);
+
+    expect(placed).toBe(true);
+    expect(game.intersections[0][0].stone).toEqual(Stone.None);
+
+    game["setTurn"](Stone.Black);
+    placed = game["makeMove"](5, 3);
+
+    expect(placed).toBe(true);
+    expect(game.intersections[6][3].stone).toEqual(Stone.White);
+
+    expect(game["blackScore"]).toBe(1);
+    expect(game["whiteScore"]).toBe(0);
+});
+
+test('makeMove: RealProjectivePlane topology', () => {
+    const xLines = 7;
+    const yLines = 7;
+    const topology = new RealProjectivePlane(xLines, yLines);
+    const game = new Game(xLines, yLines, topology);
+    const mockBoard:any = {
+        setTurn: () => {},
+        drawStones: () => {}
+    };
+    game.board = mockBoard;
+
+    /*
+    w  B  _  _  _  _  _
+    b  _  _  _  _  _  _
+    _  _  _  _  _  _  b
+    _  _  _  _  _  B  w
+    _  _  _  _  _  _  b
+    _  _  _  _  _  _  _
+    _  _  _  _  _  _  B
+    */
+
+    game.intersections[0][0].stone = Stone.White;
+
+    game.intersections[0][1].stone = Stone.Black;
+
+    game.intersections[6][3].stone = Stone.White;
+
+    game.intersections[6][2].stone = Stone.Black;
+    game.intersections[6][4].stone = Stone.Black;
+
+    // These test stones count as part of a completed turn (So they need to be in the gameState)
+    game["gameState"].intersections = game.copyIntersections();
+
+    let placed: boolean;
+
+    game["setTurn"](Stone.Black);
+    placed = game["makeMove"](1, 0);
+
+    expect(placed).toBe(true);
+    expect(game.intersections[0][0].stone).toEqual(Stone.White);
+
+    game["setTurn"](Stone.Black);
+    placed = game["makeMove"](6, 6);
+
+    expect(placed).toBe(true);
+    expect(game.intersections[0][0].stone).toEqual(Stone.None);
+
+    game["setTurn"](Stone.Black);
+    placed = game["makeMove"](5, 3);
+
+    expect(placed).toBe(true);
+    expect(game.intersections[6][3].stone).toEqual(Stone.White);
+
+    expect(game["blackScore"]).toBe(1);
+    expect(game["whiteScore"]).toBe(0);
+});

@@ -276,6 +276,7 @@ export class Game {
     public board: Board;
     public intersections: Intersection[][];
     private gameState: GameState = null;
+    private topology: Topology;
     private svg: SVGSelection;
     private width: number = 500;
     private height: number = 500;
@@ -287,9 +288,10 @@ export class Game {
     private claimedTerritories: Territory[] = [];
     private claimedTerritoryLookup: HashSet = new HashSet();
 
-    constructor(xLines: number = 19, yLines: number = 19) {
+    constructor(xLines: number = 19, yLines: number = 19, topology: Topology = null) {
         this.xLines = xLines;
         this.yLines = yLines;
+        this.topology = topology || new Classic(xLines, yLines);
         
         this.intersections = Game.initIntersections(xLines, yLines);
 
@@ -796,12 +798,7 @@ export class Game {
     }
 
     private getIntersection(xPos: number, yPos: number) {
-        if(0 <= xPos && xPos < this.xLines && 0 <= yPos && yPos < this.yLines) {
-            return this.intersections[xPos][yPos];
-        }
-        else {
-            return null;
-        }
+        return this.topology.getIntersection(this.intersections, xPos, yPos);
     }
 }
 
