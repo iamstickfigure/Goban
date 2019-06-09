@@ -2491,3 +2491,71 @@ test('makeMove: RealProjectivePlane topology', () => {
     expect(game["blackScore"]).toBe(1);
     expect(game["whiteScore"]).toBe(0);
 });
+
+test('getCapturedNeighbors: RealProjectivePlane - Bizzare 3 stone capture (No overlapping captured groups)', () => {
+    const xLines = 5;
+    const yLines = 5;
+    const topology = new RealProjectivePlane(xLines, yLines);
+    const game = new Game(xLines, yLines, topology);
+    const mockBoard:any = {
+        setTurn: () => {},
+        drawStones: () => {}
+    };
+    game.board = mockBoard;
+
+    /*
+    w  b  _  _  _
+    b  _  _  _  _
+    _  _  _  _  _
+    _  _  _  _  _
+    _  _  _  _  b
+    */
+
+    game.intersections[0][0].stone = Stone.White;
+
+    game.intersections[1][0].stone = Stone.Black;
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[4][4].stone = Stone.Black;
+
+    const capturedGroups = game["getCapturedNeighbors"](4, 4);
+
+    expect(capturedGroups).toHaveLength(1);
+    expect(capturedGroups[0]).toHaveLength(1);
+    expect(capturedGroups[0][0]).toBe(game.intersections[0][0]);
+});
+
+test('getCapturedNeighbors: RealProjectivePlane - More complex bizzare capture (No overlapping captured groups)', () => {
+    const xLines = 5;
+    const yLines = 5;
+    const topology = new RealProjectivePlane(xLines, yLines);
+    const game = new Game(xLines, yLines, topology);
+    const mockBoard:any = {
+        setTurn: () => {},
+        drawStones: () => {}
+    };
+    game.board = mockBoard;
+
+    /*
+    w  w  b  _  _
+    b  b  _  _  _
+    _  _  _  _  _
+    _  _  _  _  _
+    _  _  _  b  b
+    */
+
+    game.intersections[0][0].stone = Stone.White;
+    game.intersections[1][0].stone = Stone.White;
+
+    game.intersections[2][0].stone = Stone.Black;
+    game.intersections[0][1].stone = Stone.Black;
+    game.intersections[1][1].stone = Stone.Black;
+    game.intersections[3][4].stone = Stone.Black;
+    game.intersections[4][4].stone = Stone.Black;
+
+    const capturedGroups = game["getCapturedNeighbors"](4, 4);
+
+    expect(capturedGroups).toHaveLength(1);
+    expect(capturedGroups[0]).toHaveLength(2);
+    expect(capturedGroups[0]).toContain(game.intersections[0][0]);
+    expect(capturedGroups[0]).toContain(game.intersections[1][0]);
+});

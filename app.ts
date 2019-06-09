@@ -1,10 +1,10 @@
-import { Game, Classic, Torus, KleinBottle } from './game';
+import { Game, Classic, Torus, KleinBottle, RealProjectivePlane } from './game';
 import './app.css';
 
 window.onload = () => {
     const xLines = 19;
     const yLines = 19;
-    const topology = new KleinBottle(xLines, yLines);
+    const topology = new RealProjectivePlane(xLines, yLines);
     const game = new Game(xLines, yLines, topology);
 
     game.initDisplay();

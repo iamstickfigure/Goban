@@ -6,7 +6,7 @@
   "scripts": {
     "start": "webpack-dev-server",
     "build": "rm -r dist/* && webpack",
-    "test": "jest -t makeMove.*topology",
+    "test": "jest -t .*Plane.*",
     "deploy": "npm run build && gh-pages -d dist"
   },
   "author": "",

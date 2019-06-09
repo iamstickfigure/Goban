@@ -554,11 +554,26 @@ export class Game {
         const neighbors = self.getAdjacentNeighbors(intersection);
         let capturedGroups: Intersection[][] = [];
 
+        // For the bizzare cases where a single stone counts as 2 of the neighbors of a captured stone (Currently only in the Real Projective Plane)
+        let allCapturedStones: HashSet = new HashSet();
+        const doesOverlap = captured => {
+            for(let int of captured) {
+                if(allCapturedStones.includes(int)) {
+                    return true;
+                }
+                else {
+                    allCapturedStones.insert(int);
+                }
+            }
+
+            return false;
+        };
+
         for(let neighbor of neighbors) {
             if(neighbor && neighbor.stone == otherPlayer) {
                 const captured = self.getCapturedGroup(neighbor);
 
-                if(captured.length > 0) {
+                if(captured.length > 0 && !doesOverlap(captured)) {
                     capturedGroups.push(captured);
                 }
             }
