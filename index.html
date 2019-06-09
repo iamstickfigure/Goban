@@ -5,9 +5,104 @@
     <title>Goban</title>
 </head>
 <body>
-    <div id="app">
-        <h3>Goban</h3>
-        <div id="goban"></div>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">Goban</a>
+        </div>
+    </nav>
+
+    <div id="app" class="container">
+        <div id="start-menu" class="row">
+            <div class="card game-overview">
+                <!-- https://commons.wikimedia.org/wiki/File:Go_board.jpg -->
+                <div class="card-img-top">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2e/Go_board.jpg" alt="Classic">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Classic</h5>
+                    <p class="card-text">
+                        Classic game of Go with edges and corners.
+                    </p>
+                    <button id="classic-button" type="button" class="btn btn-primary">Start</button>
+                </div>
+            </div>
+            <div class="card game-overview">
+                <!-- https://commons.wikimedia.org/wiki/File:Torus.png -->
+                <div class="card-img-top">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/1/17/Torus.png" alt="Torus">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Torus</h5>
+                    <p class="card-text">
+                        Edges wrap around (Like pacman)
+                    </p>
+                    <button id="torus-button" type="button" class="btn btn-primary">Start</button>
+                </div>
+            </div>
+            <div class="card game-overview">
+                <!-- https://commons.wikimedia.org/wiki/File:Klein_bottle.svg -->
+                <div class="card-img-top">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Klein_bottle.svg" alt="Klein Bottle">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Klein Bottle</h5>
+                    <p class="card-text">
+                        Edges wrap around like the torus above and below, but flip vertically left and right.
+                    </p>
+                    <button id="klein-button" type="button" class="btn btn-primary">Start</button>
+                </div>
+            </div>
+            <div class="card game-overview">
+                <!-- https://commons.wikimedia.org/wiki/File:CrossCapTwoViews.PNG -->
+                <div class="card-img-top">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/CrossCapTwoViews.PNG" alt="Real Projective Plane">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Real Projective Plane</h5>
+                    <p class="card-text">
+                        Edges wrap around, but flip horizontally up and down, and flip vertically left and right.
+                    </p>
+                    <button id="rpp-button" type="button" class="btn btn-primary">Start</button>
+                </div>
+            </div>
+            <div class="card game-overview">
+                <!-- https://commons.wikimedia.org/wiki/File:Circular_Cylinder_Quadric.png -->
+                <div class="card-img-top">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/0/0c/Circular_Cylinder_Quadric.png" alt="Cylinder">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Cylinder</h5>
+                    <p class="card-text">
+                        Wrap around like the torus left and right, but the top and bottom are hard edges like classic.
+                    </p>
+                    <button id="cylinder-button" type="button" class="btn btn-primary">Start</button>
+                </div>
+            </div>
+            <div class="card game-overview">
+                <!-- https://commons.wikimedia.org/wiki/File:Moebius_Surface_1_Display.png -->
+                <div class="card-img-top">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/4/4f/Moebius_Surface_1_Display.png" alt="Mobius Strip">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Mobius Strip</h5>
+                    <p class="card-text">
+                        Wrap around left and right and flips vertically, but the top and bottom are hard edges like classic.
+                    </p>
+                    <button id="mobius-button" type="button" class="btn btn-primary">Start</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="goban" class="row">
+            <svg>
+                <defs>
+                    <pattern id="wood" patternUnits="userSpaceOnUse" width="500" height="500">
+                        <!-- https://commons.wikimedia.org/wiki/File:Cerberiopsis_candelabra_MHNT.BOT.2010.6.59.jpg -->
+                        <image xlink:href="images/Cerberiopsis_candelabra_square.jpg" x="0" y="0" width="500" height="500" />
+                    </pattern>
+                </defs>
+            </svg>
+        </div>
     </div>
-<script type="text/javascript" src="bundle.42a9aec7d3e237508b45.js"></script></body>
+<script type="text/javascript" src="bundle.078356376993a73021d1.js"></script></body>
 </html>
