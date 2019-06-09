@@ -1,3 +1,39 @@
+@import "~bootstrap/scss/bootstrap";
+
+.hidden {
+    display: none !important;
+}
+
+#start-menu {
+    margin-top: 2em;
+}
+
+.card.game-overview {
+    width: 33%;
+
+    div.card-img-top {
+        height: 13em;
+        text-align: center;
+
+        img {
+            max-height: 100%;
+            max-width: 100%;
+        }
+    }
+}
+
+#goban {
+    margin-top: 2em;
+
+    svg {
+        margin: auto;
+    }
+}
+
+g.board {
+    background-image: url("https://upload.wikimedia.org/wikipedia/commons/4/46/Cerberiopsis_candelabra_MHNT.BOT.2010.6.59.jpg");
+}
+
 g.lines line {
     stroke:black;
     shape-rendering: crispEdges;

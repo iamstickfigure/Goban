@@ -2,7 +2,7 @@
 import * as d3 from 'd3';
 import { transpose } from 'd3';
 
-export type SVGSelection = d3.Selection<SVGSVGElement, {}, HTMLElement, any>;
+export type SVGSelection = d3.Selection<d3.BaseType, {}, HTMLElement, any>;
 export type Selection = d3.Selection<SVGGElement, {}, HTMLElement, any>;
 
 export const STONE_CLASSES = [
@@ -30,6 +30,76 @@ export class Intersection implements Hashable {
     
     public hashKey(): string {
         return `(${this.xPos},${this.yPos})`;
+    }
+}
+
+export class MainInterface {
+    private game: Game;
+    private xLines: number = 19;
+    private yLines: number = 19;
+
+    constructor() {
+        document.getElementById('classic-button').addEventListener('click', () => {
+            this.startClassicGame();
+        });
+        document.getElementById('torus-button').addEventListener('click', () => {
+            this.startTorusGame();
+        });
+        document.getElementById('klein-button').addEventListener('click', () => {
+            this.startKleinBottleGame();
+        });
+        document.getElementById('rpp-button').addEventListener('click', () => {
+            this.startRealProjectivePlaneGame();
+        });
+        document.getElementById('cylinder-button').addEventListener('click', () => {
+            this.startCylinderGame();
+        });
+        document.getElementById('mobius-button').addEventListener('click', () => {
+            this.startMobiusStripGame();
+        });
+    }
+
+    private startGame(topology: Topology) {
+        const {
+            xLines,
+            yLines
+        } = this;
+
+        this.hideStartMenu();
+
+        this.game = new Game(xLines, yLines, topology);
+        this.game.initDisplay();
+        
+        Game.makeGlobal(this.game);
+        // Game.autoPlacement(game, 1000);
+    }
+
+    private hideStartMenu() {
+        document.getElementById('start-menu').classList.add('hidden');
+    }
+
+    public startClassicGame() {
+        this.startGame(new Classic(this.xLines, this.yLines));
+    }
+
+    public startTorusGame() {
+        this.startGame(new Torus(this.xLines, this.yLines));
+    }
+
+    public startKleinBottleGame() {
+        this.startGame(new KleinBottle(this.xLines, this.yLines));
+    }
+
+    public startRealProjectivePlaneGame() {
+        this.startGame(new RealProjectivePlane(this.xLines, this.yLines));
+    }
+
+    public startCylinderGame() {
+        this.startGame(new Cylinder(this.xLines, this.yLines));
+    }
+
+    public startMobiusStripGame() {
+        this.startGame(new MobiusStrip(this.xLines, this.yLines));
     }
 }
 
@@ -61,6 +131,7 @@ export class Board {
     }
 
     public draw(intersections: Intersection[][]) {
+        this.drawBackgroundImage();
         this.drawGrid(intersections);
         this.drawHandicapPoints();
 
@@ -69,6 +140,17 @@ export class Board {
         this.boardElement.append('g').attr('class', 'overlay');
 
         this.drawStones(intersections);
+    }
+
+    private drawBackgroundImage() {
+        this.boardElement.append('g')
+            .attr('class', 'background')
+            .append('rect')
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('width', this.width)
+                .attr('height', this.height)
+                .attr('fill', 'url(#wood)');
     }
 
     private drawHandicapPoints() {
@@ -101,11 +183,16 @@ export class Board {
     private drawGrid(intersections: Intersection[][]) {
         const {
             boardElement,
-            width,
-            height
+            xLines,
+            yLines
         } = this;
 
         const lines = boardElement.append('g').attr('class', 'lines');
+
+        const minX = this.getBoardX(0);
+        const maxX = this.getBoardX(xLines - 1);
+        const minY = this.getBoardY(0);
+        const maxY = this.getBoardY(yLines - 1);
 
         lines.append('g').attr('class', 'x-lines')
             .selectAll('line')
@@ -113,18 +200,18 @@ export class Board {
                 .enter()
                 .append('line')
                     .attr('x1', d => this.getBoardX(d[0].xPos))
-                    .attr('y1', 0)
+                    .attr('y1', minY)
                     .attr('x2', d => this.getBoardX(d[0].xPos))
-                    .attr('y2', height);
+                    .attr('y2', maxY);
 
         lines.append('g').attr('class', 'y-lines')
             .selectAll('line')
             .data(intersections[0])
                 .enter()
                 .append('line')
-                    .attr('x1', 0)
+                    .attr('x1', minX)
                     .attr('y1', d => this.getBoardY(d.yPos))
-                    .attr('x2', width)
+                    .attr('x2', maxX)
                     .attr('y2', d => this.getBoardY(d.yPos));
     }
 
@@ -388,8 +475,15 @@ export class Game {
             claimTerritory
         } = this;
 
-        const svg = d3.select('#goban').append('svg');
+        const svg = d3.select('#goban svg');
         const boardElement = svg.append('g').attr('class', 'board');
+
+        const woodPattern = svg.select('defs #wood');
+        woodPattern.attr('width', width);
+        woodPattern.attr('height', height);
+        woodPattern.select('image')
+            .attr('width', width)
+            .attr('height', height);
 
         this.board = new Board(boardElement, width, height, xLines, yLines, makeMove.bind(this), claimTerritory.bind(this));
 
