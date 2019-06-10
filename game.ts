@@ -322,8 +322,8 @@ export class Board {
 
         highlight.enter()
             .append('circle')
-            .attr('class', `highlight stone ${STONE_CLASSES[self.turn]}`)
             .merge(highlight)
+                .attr('class', `highlight stone ${STONE_CLASSES[self.turn]}`)
                 .attr('cx', d => self.getBoardX(d.xPos))
                 .attr('cy', d => self.getBoardY(d.yPos))
                 .attr('r', stoneRadius);
