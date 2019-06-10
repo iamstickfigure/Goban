@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
     entry: "./app.ts",
@@ -61,7 +62,7 @@ module.exports = {
         }),
         new CopyWebpackPlugin([
             {
-                from: 'src/images',
+                from: 'images',
                 to: 'images'
             } 
         ]), 

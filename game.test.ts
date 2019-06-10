@@ -355,7 +355,7 @@ test('makeMove: game states are tracked', () => {
         setTurn: () => {},
         drawStones: () => {}
     };
-    game.board = mockBoard;
+    game.boards = [mockBoard];
 
     const placed1 = game["makeMove"](0, 0);
     const placed2 = game["makeMove"](1, 0);
@@ -401,7 +401,7 @@ test('makeMove: black can capture atari', () => {
         setTurn: () => {},
         drawStones: () => {}
     };
-    game.board = mockBoard;
+    game.boards = [mockBoard];
 
     /*
        b
@@ -434,7 +434,7 @@ test('makeMove: white can capture atari', () => {
         setTurn: () => {},
         drawStones: () => {}
     };
-    game.board = mockBoard;
+    game.boards = [mockBoard];
 
     /*
        w
@@ -467,7 +467,7 @@ test('makeMove: can capture on edge', () => {
         setTurn: () => {},
         drawStones: () => {}
     };
-    game.board = mockBoard;
+    game.boards = [mockBoard];
 
     /*
     b
@@ -499,7 +499,7 @@ test('makeMove: can capture on corner', () => {
         setTurn: () => {},
         drawStones: () => {}
     };
-    game.board = mockBoard;
+    game.boards = [mockBoard];
 
     /*
     w  B
@@ -529,7 +529,7 @@ test('makeMove: multi-capture', () => {
         setTurn: () => {},
         drawStones: () => {}
     };
-    game.board = mockBoard;
+    game.boards = [mockBoard];
 
     /*
           b
@@ -575,7 +575,7 @@ test('makeMove: Cannot place immediately captured stone', () => {
         setTurn: () => {},
         drawStones: () => {}
     };
-    game.board = mockBoard;
+    game.boards = [mockBoard];
 
     /*
        b
@@ -606,7 +606,7 @@ test('makeMove: Can place stone if it will capture stones', () => {
         setTurn: () => {},
         drawStones: () => {}
     };
-    game.board = mockBoard;
+    game.boards = [mockBoard];
 
     /*
        b  w
@@ -642,7 +642,7 @@ test('makeMove: Cannot place stone if it repeats the previous board state (Ko)',
         setTurn: () => {},
         drawStones: () => {}
     };
-    game.board = mockBoard;
+    game.boards = [mockBoard];
 
     /*
        b  w
@@ -2322,7 +2322,7 @@ test('makeMove: Torus topology', () => {
         setTurn: () => {},
         drawStones: () => {}
     };
-    game.board = mockBoard;
+    game.boards = [mockBoard];
 
     /*
     w  B  _  _  _  _  b
@@ -2380,7 +2380,7 @@ test('makeMove: KleinBottle topology', () => {
         setTurn: () => {},
         drawStones: () => {}
     };
-    game.board = mockBoard;
+    game.boards = [mockBoard];
 
     /*
     w  B  _  _  _  _  B
@@ -2444,7 +2444,7 @@ test('makeMove: RealProjectivePlane topology', () => {
         setTurn: () => {},
         drawStones: () => {}
     };
-    game.board = mockBoard;
+    game.boards = [mockBoard];
 
     /*
     w  B  _  _  _  _  _
@@ -2501,7 +2501,7 @@ test('getCapturedNeighbors: RealProjectivePlane - Bizzare 3 stone capture (No ov
         setTurn: () => {},
         drawStones: () => {}
     };
-    game.board = mockBoard;
+    game.boards = [mockBoard];
 
     /*
     w  b  _  _  _
@@ -2533,7 +2533,7 @@ test('getCapturedNeighbors: RealProjectivePlane - More complex bizzare capture (
         setTurn: () => {},
         drawStones: () => {}
     };
-    game.board = mockBoard;
+    game.boards = [mockBoard];
 
     /*
     w  w  b  _  _

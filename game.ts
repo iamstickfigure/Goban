@@ -1,5 +1,6 @@
 // https://www.giacomodebidda.com/how-to-import-d3-plugins-with-webpack/
 import * as d3 from 'd3';
+import * as $ from 'jquery';
 import { transpose } from 'd3';
 
 export type SVGSelection = d3.Selection<d3.BaseType, {}, HTMLElement, any>;
@@ -104,6 +105,7 @@ export class MainInterface {
 }
 
 export class Board {
+    private svg: SVGSelection;
     private boardElement: Selection;
     public stoneRadius: number;
     private width: number;
@@ -112,16 +114,22 @@ export class Board {
     private yLines: number = 19;
     private turn: Stone = Stone.Black;
     private territoryMode: boolean = false;
+    private highlightedInt: DataBinding<Intersection>;
+    private boardLayout: BoardLayout;
     private makeMove: Function;
     private claimTerritory: Function;
 
-    constructor(boardElement: Selection, width: number, height: number, xLines: number, yLines: number, makeMove: Function, claimTerritory: Function) {
+    constructor(svg: SVGSelection, width: number, height: number, xLines: number, yLines: number, makeMove: Function, claimTerritory: Function, highlighedInt: DataBinding<Intersection> = null, boardLayout: BoardLayout = null) {
+
         this.xLines = xLines;
         this.yLines = yLines;
-        this.boardElement = boardElement;
+        this.svg = svg;
         this.width = width;
         this.height = height;
         this.stoneRadius = Math.min(width / xLines, height / yLines) / 2;
+        this.boardLayout = boardLayout || new BoardLayout();
+        this.highlightedInt = highlighedInt || new DataBinding();
+
         this.makeMove = makeMove;
         this.claimTerritory = claimTerritory;
     }
@@ -131,6 +139,20 @@ export class Board {
     }
 
     public draw(intersections: Intersection[][]) {
+        const {
+            svg,
+            boardLayout,
+            width,
+            height
+        } = this;
+
+        this.boardElement = svg.append('g').attr('class', 'board');
+
+        const x = boardLayout.boardX * width;
+        const y = boardLayout.boardY * height;
+
+        this.boardElement.attr('transform', `translate(${x} ${y})`);
+
         this.drawBackgroundImage();
         this.drawGrid(intersections);
         this.drawHandicapPoints();
@@ -219,7 +241,8 @@ export class Board {
         const self = this;
         const {
             boardElement,
-            stoneRadius
+            stoneRadius,
+            highlightedInt
         } = this;
 
         const allIntersections = intersections.reduce((all, col) => all.concat(col));
@@ -254,27 +277,24 @@ export class Board {
             .attr('height', stoneRadius*2);
 
         overlayInts.on('mouseover', function(d) {
+            d3.event.stopPropagation();
+
             if(self.territoryMode && d.stone != Stone.None) {
                 const otherPlayer = d.stone == Stone.Black ? Stone.White : Stone.Black;
 
                 d3.select(this)
                     .append('circle')
-                    .attr('class', `highlight stone ${STONE_CLASSES[otherPlayer]}`)
+                    .attr('class', `territory highlight stone ${STONE_CLASSES[otherPlayer]}`)
                     .attr('cx', self.getBoardX(d.xPos))
                     .attr('cy', self.getBoardY(d.yPos))
                     .attr('r', stoneRadius/2);
             }
             else if(!self.territoryMode && d.stone == Stone.None) {
-                d3.select(this)
-                    .append('circle')
-                    .attr('class', `highlight stone ${STONE_CLASSES[self.turn]}`)
-                    .attr('cx', self.getBoardX(d.xPos))
-                    .attr('cy', self.getBoardY(d.yPos))
-                    .attr('r', stoneRadius);
+                highlightedInt.setValue(intersections[d.xPos][d.yPos]);
             }
         }).on('mouseout', function() {
             d3.select(this)
-                .select('circle.highlight')
+                .select('circle.highlight.territory')
                 .remove();
         }).on('click', function(d) {
             if(self.territoryMode && d.stone != Stone.None) {
@@ -284,6 +304,38 @@ export class Board {
                 self.makeMove(d.xPos, d.yPos);
             }
         });
+    }
+
+    public drawHighlight() {
+        const self = this;
+        const {
+            stoneRadius,
+            boardElement,
+            highlightedInt
+        } = this;
+
+        const data = highlightedInt.value ? [highlightedInt.value] : []; 
+
+        const overlay = boardElement.select('g.overlay');
+        const highlight:any = overlay.selectAll('circle.highlight')
+            .data(data)
+
+        highlight.enter()
+            .append('circle')
+            .attr('class', `highlight stone ${STONE_CLASSES[self.turn]}`)
+            .merge(highlight)
+                .attr('cx', d => self.getBoardX(d.xPos))
+                .attr('cy', d => self.getBoardY(d.yPos))
+                .attr('r', stoneRadius);
+
+        highlight.exit()
+            .remove();
+        
+        // Add this to exit() to see how many times it's being called
+        // .attr('r', d => {
+        //     console.log('exit');
+        //     return stoneRadius;
+        // })
     }
 
     public drawTerritories(territories: Territory[]) {
@@ -351,16 +403,21 @@ export class Board {
     // }
 
     private getBoardX(x) {
-        return (x + .5) * (this.width / this.xLines);
+        const xFlipped = this.boardLayout.hFlip ? Topology.flip(x, this.xLines) : x;
+
+        return (xFlipped + .5) * (this.width / this.xLines);
     }
 
     private getBoardY(y) {
-        return (y + .5) * (this.height / this.yLines);
+        const yFlipped = this.boardLayout.vFlip ? Topology.flip(y, this.yLines) : y;
+
+        return (yFlipped + .5) * (this.height / this.yLines);
     }
 }
 
 export class Game {
-    public board: Board;
+    public boards: Board[] = [];
+    private highlighedInt: DataBinding<Intersection> = new DataBinding();
     public intersections: Intersection[][];
     private gameState: GameState = null;
     private topology: Topology;
@@ -466,17 +523,58 @@ export class Game {
 
     public initDisplay() {
         const {
-            width,
-            height,
             xLines,
             yLines,
             intersections,
             makeMove,
-            claimTerritory
+            claimTerritory,
+            topology
         } = this;
 
+        const screenWidth = $(window).width();
+        const screenHeight = $(window).height();
+
+        // Support landscape with square boards only for now
+        const svgHeight = screenHeight - 80; //Math.min(screenWidth, screenHeight);
+        const svgWidth = screenWidth - 80; //Math.min(screenWidth, screenHeight);
+
+        let boardDimension = svgHeight;
         const svg = d3.select('#goban svg');
-        const boardElement = svg.append('g').attr('class', 'board');
+
+        if(topology instanceof Torus || topology instanceof KleinBottle || topology instanceof RealProjectivePlane) {
+            svg.attr('width', svgHeight)
+                .attr('height', svgHeight);
+            
+            boardDimension = svgHeight / 3;
+        }
+        else if(topology instanceof Cylinder || topology instanceof MobiusStrip) {
+            svg.attr('width', svgWidth)
+                .attr('height', svgWidth / 3);
+
+            boardDimension = svgWidth / 3;
+        }
+        else {
+            // topology instanceof Classic
+            svg.attr('width', svgHeight)
+                .attr('height', svgHeight);
+        }
+
+        const width = boardDimension;
+        const height = boardDimension;
+
+        this.highlighedInt = new DataBinding(null, val => {
+            for(let board of this.boards) {
+                board.drawHighlight();
+            }
+        });
+
+        d3.select('body').on('mouseover', () => {
+            // d3.event.stopPropagation() on child mouseover events
+
+            this.highlighedInt.setValue(null);
+        });
+
+        this.boards = topology.layouts.map(layout => new Board(svg, width, height, xLines, yLines, makeMove.bind(this), claimTerritory.bind(this), this.highlighedInt, layout));
 
         const woodPattern = svg.select('defs #wood');
         woodPattern.attr('width', width);
@@ -485,18 +583,19 @@ export class Game {
             .attr('width', width)
             .attr('height', height);
 
-        this.board = new Board(boardElement, width, height, xLines, yLines, makeMove.bind(this), claimTerritory.bind(this));
-
-        svg.attr('width', width)
-            .attr('height', height);
-
         this.svg = svg;
-        this.board.draw(intersections);
+
+        for(let board of this.boards) {
+            board.draw(intersections);
+        }
     }
 
     private setTurn(turn: Stone) {
         this.turn = turn;
-        this.board.setTurn(turn);
+
+        for(let board of this.boards) {
+            board.setTurn(turn);
+        }
     }
 
     private makeMove(xPos: number, yPos: number): boolean {
@@ -575,27 +674,31 @@ export class Game {
         // console.log(`prevGameState\n${this.gameState.prevGameState.toString()}`);
         // console.log(`gameState\n${this.gameState.toString()}`);
 
-        this.updateBoard();
+        this.updateBoards();
     }
 
     private newGameState() {
         return new GameState(this.copyIntersections(), this.turn, this.blackScore, this.whiteScore, this.gameState);
     }
 
-    private updateBoard() {
+    private updateBoards() {
         const {
-            board,
+            boards,
             intersections
         } = this;
 
-        board.drawStones(intersections);
+        for(let board of boards) {
+            board.drawStones(intersections);
+        }
         // board.printStones();
     }
 
     private updateBoardTerritories() {
         const territories = this.getAllTerritories();
 
-        this.board.drawTerritories(territories);
+        for(let board of this.boards) {
+            board.drawTerritories(territories);
+        }
     }
 
     private loadGameState(state: GameState) {
@@ -1005,6 +1108,7 @@ export class Territory {
 }
 
 export abstract class Topology {
+    public abstract layouts: BoardLayout[];
     protected xLines: number;
     protected yLines: number;
 
@@ -1030,6 +1134,10 @@ export abstract class Topology {
 }
 
 export class Classic extends Topology {
+    layouts: BoardLayout[] = [
+        new BoardLayout(0, 0, false, false)        
+    ];
+
     public getIntersection(intersections: Intersection[][], xPos: number, yPos: number): Intersection {
         if(0 <= xPos && xPos < this.xLines && 0 <= yPos && yPos < this.yLines) {
             return intersections[xPos][yPos];
@@ -1041,6 +1149,18 @@ export class Classic extends Topology {
 }
 
 export class Torus extends Topology {
+    layouts: BoardLayout[] = [
+        new BoardLayout(0, 0, false, false),
+        new BoardLayout(1, 0, false, false),
+        new BoardLayout(2, 0, false, false),
+        new BoardLayout(0, 1, false, false),
+        new BoardLayout(1, 1, false, false),
+        new BoardLayout(2, 1, false, false),
+        new BoardLayout(0, 2, false, false),
+        new BoardLayout(1, 2, false, false),
+        new BoardLayout(2, 2, false, false),
+    ];
+    
     public getIntersection(intersections: Intersection[][], xPos: number, yPos: number): Intersection {
         const {
             xLines,
@@ -1055,6 +1175,18 @@ export class Torus extends Topology {
 }
 
 export class KleinBottle extends Topology {
+    layouts: BoardLayout[] = [
+        new BoardLayout(0, 0, false, true),
+        new BoardLayout(1, 0, false, false),
+        new BoardLayout(2, 0, false, true),
+        new BoardLayout(0, 1, false, true),
+        new BoardLayout(1, 1, false, false),
+        new BoardLayout(2, 1, false, true),
+        new BoardLayout(0, 2, false, true),
+        new BoardLayout(1, 2, false, false),
+        new BoardLayout(2, 2, false, true),
+    ];
+
     public getIntersection(intersections: Intersection[][], xPos: number, yPos: number): Intersection {
         const {
             xLines,
@@ -1072,6 +1204,18 @@ export class KleinBottle extends Topology {
 }
 
 export class RealProjectivePlane extends Topology {
+    layouts: BoardLayout[] = [
+        new BoardLayout(0, 0, true, true),
+        new BoardLayout(1, 0, true, false),
+        new BoardLayout(2, 0, true, true),
+        new BoardLayout(0, 1, false, true),
+        new BoardLayout(1, 1, false, false),
+        new BoardLayout(2, 1, false, true),
+        new BoardLayout(0, 2, true, true),
+        new BoardLayout(1, 2, true, false),
+        new BoardLayout(2, 2, true, true),
+    ];
+
     public getIntersection(intersections: Intersection[][], xPos: number, yPos: number): Intersection {
         const {
             xLines,
@@ -1092,6 +1236,12 @@ export class RealProjectivePlane extends Topology {
 }
 
 export class Cylinder extends Topology {
+    layouts: BoardLayout[] = [
+        new BoardLayout(0, 0, false, false),
+        new BoardLayout(1, 0, false, false),
+        new BoardLayout(2, 0, false, false),
+    ];
+
     public getIntersection(intersections: Intersection[][], xPos: number, yPos: number): Intersection {
         if(0 <= yPos && yPos < this.yLines) {
             const {
@@ -1109,6 +1259,12 @@ export class Cylinder extends Topology {
 }
 
 export class MobiusStrip extends Topology {
+    layouts: BoardLayout[] = [
+        new BoardLayout(0, 0, false, true),
+        new BoardLayout(1, 0, false, false),
+        new BoardLayout(2, 0, false, true),
+    ];
+
     public getIntersection(intersections: Intersection[][], xPos: number, yPos: number): Intersection {
         if(0 <= yPos && yPos < this.yLines) {
             const {
@@ -1150,4 +1306,36 @@ interface Hashable {
 
 interface Pointer<T> {
     value: T;
+}
+
+class DataBinding<T> {
+    value: T;
+    onChange: Function;
+
+    constructor(val: T = null, onChange: Function = null) {
+        this.value = val;
+        this.onChange = onChange;
+    }
+
+    setValue(val: T) {
+        this.value = val;
+
+        if(this.onChange) {
+            this.onChange(val);
+        }
+    }
+}
+
+class BoardLayout {
+    boardX: number;
+    boardY: number;
+    hFlip: boolean;
+    vFlip: boolean;
+
+    constructor(boardX: number = 0, boardY: number = 0, hFlip: boolean = false, vFlip: boolean = false) {
+        this.boardX = boardX;
+        this.boardY = boardY;
+        this.hFlip = hFlip;
+        this.vFlip = vFlip;
+    }
 }
