@@ -5,9 +5,32 @@
     <title>Goban</title>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#">Goban</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark justify-content-between">
+        <a class="navbar-brand left" href="#">Goban</a>
+
+        <div class="players">
+            <div class="player">
+                <div class="name">
+                    Black
+                </div>
+                <div class="score">
+                    Score: <span id="black-score">0</span>
+                </div>
+            </div>
+            <div class="player">
+                <div class="name">
+                    White
+                </div>
+                <div class="score">
+                    Score: <span id="white-score">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls right">
+            <button type="button" class="btn btn-dark" alt="Pass">Pass</button>
+            <button type="button" class="btn btn-dark" alt="Undo">&lt;</button>
+            <button type="button" class="btn btn-dark" alt="Redo">&gt;</button>
         </div>
     </nav>
 
@@ -95,7 +118,7 @@
     </div>
 
     <div class="container game-container">
-        <div id="goban" class="row">
+        <div id="goban" class="row hidden">
             <svg>
                 <defs>
                     <pattern id="wood" patternUnits="userSpaceOnUse" width="500" height="500">

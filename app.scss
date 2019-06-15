@@ -4,6 +4,33 @@
     display: none !important;
 }
 
+.navbar {
+    padding: 0.5rem 2rem;
+    color: #fff;
+
+    .left, .right {
+        width: 10%;
+    }
+
+    .right {
+        text-align: right;
+    }
+}
+
+.players {
+    width: 20em;
+    display: flex;
+    justify-content: space-between;
+
+    .player {
+        text-align: center;
+
+        .name {
+            font-weight: bold;
+        }
+    }
+}
+
 .game-container {
     max-width: 96vw;
 }

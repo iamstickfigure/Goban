@@ -66,17 +66,14 @@ export class MainInterface {
             yLines
         } = this;
 
-        this.hideStartMenu();
+        document.getElementById('start-menu').classList.add('hidden');
+        document.getElementById('goban').classList.remove('hidden');
 
         this.game = new Game(xLines, yLines, topology);
         this.game.initDisplay();
         
         Game.makeGlobal(this.game);
         // Game.autoPlacement(game, 1000);
-    }
-
-    private hideStartMenu() {
-        document.getElementById('start-menu').classList.add('hidden');
     }
 
     public startClassicGame() {
