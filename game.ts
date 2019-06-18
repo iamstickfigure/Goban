@@ -2,6 +2,7 @@
 import * as d3 from 'd3';
 import * as $ from 'jquery';
 import { transpose } from 'd3';
+import { stat } from 'fs';
 
 export type SVGSelection = d3.Selection<d3.BaseType, {}, HTMLElement, any>;
 export type Selection = d3.Selection<SVGGElement, {}, HTMLElement, any>;
@@ -68,6 +69,8 @@ export class MainInterface {
 
         document.getElementById('start-menu').classList.add('hidden');
         document.getElementById('goban').classList.remove('hidden');
+        document.getElementById('players').classList.remove('hidden');
+        document.getElementById('controls').classList.remove('hidden');
 
         this.game = new Game(xLines, yLines, topology);
         this.game.initDisplay();
@@ -129,6 +132,14 @@ export class Board {
 
         this.makeMove = makeMove;
         this.claimTerritory = claimTerritory;
+    }
+
+    public enterTerritoryMode() {
+        this.territoryMode = true;
+    }
+
+    public exitTerritoryMode() {
+        this.territoryMode = false;
     }
 
     public setTurn(turn: Stone) {
@@ -289,6 +300,9 @@ export class Board {
             else if(!self.territoryMode && d.stone == Stone.None) {
                 highlightedInt.setValue(intersections[d.xPos][d.yPos]);
             }
+            else if(!self.territoryMode && d.stone != Stone.None) {
+                highlightedInt.setValue(null);
+            }
         }).on('mouseout', function() {
             d3.select(this)
                 .select('circle.highlight.territory')
@@ -332,7 +346,7 @@ export class Board {
         // .attr('r', d => {
         //     console.log('exit');
         //     return stoneRadius;
-        // })
+        // });
     }
 
     public drawTerritories(territories: Territory[]) {
@@ -537,6 +551,7 @@ export class Game {
 
         let boardDimension = svgHeight;
         const svg = d3.select('#goban svg');
+        this.svg = svg;
 
         if(topology instanceof Torus || topology instanceof KleinBottle || topology instanceof RealProjectivePlane) {
             svg.attr('width', svgHeight)
@@ -580,15 +595,54 @@ export class Game {
             .attr('width', width)
             .attr('height', height);
 
-        this.svg = svg;
+        document.getElementById('pass-btn').addEventListener('click', () => this.pass());
+        document.getElementById('undo-btn').addEventListener('click', () => this.undo());
+        document.getElementById('redo-btn').addEventListener('click', () => this.redo());
 
         for(let board of this.boards) {
             board.draw(intersections);
         }
     }
 
+    private pass() {
+        if(this.gameState.prevGameState.isPass) {
+            this.endGame();
+        }
+        else {
+            this.gameState.isPass = true;
+            this.nextTurn();
+        }
+    }
+
+    private undo() {
+        this.loadGameState(this.gameState.prevGameState);
+        this.updateBoards();
+    }
+
+    private redo() {
+        this.loadGameState(this.gameState.nextGameState);
+        this.updateBoards();
+    }
+
+    private endGame() {
+        this.updateBoardTerritories();
+
+        for(let board of this.boards) {
+            board.enterTerritoryMode();
+        }
+    }
+
     private setTurn(turn: Stone) {
         this.turn = turn;
+        
+        if(turn == Stone.Black) {
+            document.getElementById('player-black').classList.add('border');
+            document.getElementById('player-white').classList.remove('border');
+        }
+        else if(turn == Stone.White) {
+            document.getElementById('player-black').classList.remove('border');
+            document.getElementById('player-white').classList.add('border');
+        }
 
         for(let board of this.boards) {
             board.setTurn(turn);
@@ -681,39 +735,69 @@ export class Game {
     private updateBoards() {
         const {
             boards,
-            intersections
+            intersections,
+            blackScore,
+            whiteScore
         } = this;
 
         for(let board of boards) {
             board.drawStones(intersections);
         }
         // board.printStones();
+
+        document.getElementById('black-score').innerHTML = `${blackScore}`;
+        document.getElementById('white-score').innerHTML = `${whiteScore}`;
     }
 
     private updateBoardTerritories() {
-        const territories = this.getAllTerritories();
-
-        for(let board of this.boards) {
-            board.drawTerritories(territories);
-        }
-    }
-
-    private loadGameState(state: GameState) {
         const {
-            xLines,
-            yLines,
-            intersections
+            boards,
+            blackScore,
+            whiteScore
         } = this;
 
-        this.setTurn(state.turn);
+        const territories = this.getAllTerritories();
 
-        for(let x = 0; x < xLines; x++) {
-            for(let y = 0; y < yLines; y++) {
-                intersections[x][y].stone = state.intersections[x][y].stone
+        for(let board of boards) {
+            board.drawTerritories(territories);
+        }
+
+        let blackTerritory = 0;
+        let whiteTerritory = 0;
+
+        for(let territory of territories) {
+            if(territory.owner == Stone.Black) {
+                blackTerritory += territory.score;
+            }
+            else if(territory.owner == Stone.White) {
+                whiteTerritory += territory.score;
             }
         }
 
-        this.gameState = state;
+        document.getElementById('black-score').innerHTML = `${blackScore} + ${blackTerritory} = ${blackScore + blackTerritory}`;
+        document.getElementById('white-score').innerHTML = `${whiteScore} + ${whiteTerritory} = ${whiteScore + whiteTerritory}`;
+    }
+
+    private loadGameState(state: GameState) {
+        if(state) {
+            const {
+                xLines,
+                yLines,
+                intersections
+            } = this;
+
+            this.setTurn(state.turn);
+
+            for(let x = 0; x < xLines; x++) {
+                for(let y = 0; y < yLines; y++) {
+                    intersections[x][y].stone = state.intersections[x][y].stone
+                }
+            }
+
+            this.blackScore = state.blackScore;
+            this.whiteScore = state.whiteScore;
+            this.gameState = state;
+        }
     }
 
     private checkForKo(): boolean {
@@ -1016,8 +1100,10 @@ class GameState {
     turn: Stone;
     moveNum: number = 0;
     prevGameState: GameState;
+    nextGameState: GameState;
     blackScore: number = 0;
     whiteScore: number = 0;
+    isPass: boolean = false;
 
     constructor(ints: Intersection[][], t: Stone, bScore: number = 0, wScore: number = 0, prev: GameState = null) {
         this.turn = t;
@@ -1031,6 +1117,7 @@ class GameState {
         }
         else {
             this.moveNum = prev.moveNum + 1;
+            prev.nextGameState = this;
         }
     }
 
