@@ -140,6 +140,8 @@ export class Board {
 
     public exitTerritoryMode() {
         this.territoryMode = false;
+
+        this.drawTerritories([]);
     }
 
     public setTurn(turn: Stone) {
@@ -616,6 +618,11 @@ export class Game {
 
     private undo() {
         this.loadGameState(this.gameState.prevGameState);
+
+        for(let board of this.boards) {
+            board.exitTerritoryMode();
+        }
+
         this.updateBoards();
     }
 
@@ -625,6 +632,7 @@ export class Game {
     }
 
     private endGame() {
+        this.displayActivePlayer(Stone.None);
         this.updateBoardTerritories();
 
         for(let board of this.boards) {
@@ -634,18 +642,23 @@ export class Game {
 
     private setTurn(turn: Stone) {
         this.turn = turn;
-        
-        if(turn == Stone.Black) {
-            document.getElementById('player-black').classList.add('border');
-            document.getElementById('player-white').classList.remove('border');
-        }
-        else if(turn == Stone.White) {
-            document.getElementById('player-black').classList.remove('border');
-            document.getElementById('player-white').classList.add('border');
-        }
+
+        this.displayActivePlayer(turn);
 
         for(let board of this.boards) {
             board.setTurn(turn);
+        }
+    }
+
+    private displayActivePlayer(turn: Stone) {
+        document.getElementById('player-black').classList.remove('active');
+        document.getElementById('player-white').classList.remove('active');
+
+        if(turn == Stone.Black) {
+            document.getElementById('player-black').classList.add('active');
+        }
+        else if(turn == Stone.White) {
+            document.getElementById('player-white').classList.add('active');
         }
     }
 
@@ -796,6 +809,8 @@ export class Game {
 
             this.blackScore = state.blackScore;
             this.whiteScore = state.whiteScore;
+            this.claimedTerritories = [];
+            this.claimedTerritoryLookup = new HashSet();
             this.gameState = state;
         }
     }

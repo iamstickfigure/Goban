@@ -1,6 +1,18 @@
 import * as puppeteer from 'puppeteer';
 import { Board, Game, Stone, Intersection, Territory, Topology, Torus, KleinBottle, RealProjectivePlane, Cylinder, MobiusStrip, Classic } from './game';
 
+function mockGameElements(game: Game) {
+    const noop:any = () => {};
+    const mockBoard:any = {
+        setTurn: noop,
+        drawStones: noop
+    };
+    
+    game['displayActivePlayer'] = noop;
+    game['updateBoards'] = noop;
+    game['boards'] = [mockBoard];
+}
+
 test('stoneRadius', () => {
     const board = new Board(null, 38, 38, 19, 19, null, null);
 
@@ -51,6 +63,8 @@ test('Intersection: empty', () => {
 
 test('getCapturedGroup: black is captured atari', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        w
@@ -73,6 +87,8 @@ test('getCapturedGroup: black is captured atari', () => {
 
 test('getCapturedGroup: white is captured atari', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b
@@ -95,6 +111,8 @@ test('getCapturedGroup: white is captured atari', () => {
 
 test('getCapturedGroup: edge', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
     b
@@ -116,6 +134,8 @@ test('getCapturedGroup: edge', () => {
 
 test('getCapturedGroup: corner', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
     w  B
@@ -135,6 +155,8 @@ test('getCapturedGroup: corner', () => {
 
 test('getCapturedGroup: multiple captured stones', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -165,6 +187,8 @@ test('getCapturedGroup: multiple captured stones', () => {
 
 test('getCapturedGroup: odd shape', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -210,6 +234,8 @@ test('getCapturedGroup: odd shape', () => {
 
 test('getCapturedGroup: circle', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -257,6 +283,8 @@ test('getCapturedGroup: circle', () => {
 
 test('getCapturedGroup: area', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -305,6 +333,8 @@ test('getCapturedGroup: area', () => {
 
 test('getCapturedGroup: not captured', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b
@@ -325,6 +355,8 @@ test('getCapturedGroup: not captured', () => {
 
 test('getCapturedGroup: not captured (long)', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -351,11 +383,8 @@ test('getCapturedGroup: not captured (long)', () => {
 
 test('makeMove: game states are tracked', () => {
     const game = new Game(3, 3);
-    const mockBoard:any = {
-        setTurn: () => {},
-        drawStones: () => {}
-    };
-    game.boards = [mockBoard];
+
+    mockGameElements(game);
 
     const placed1 = game["makeMove"](0, 0);
     const placed2 = game["makeMove"](1, 0);
@@ -397,11 +426,8 @@ test('makeMove: game states are tracked', () => {
 
 test('makeMove: black can capture atari', () => {
     const game = new Game();
-    const mockBoard:any = {
-        setTurn: () => {},
-        drawStones: () => {}
-    };
-    game.boards = [mockBoard];
+    
+    mockGameElements(game);
 
     /*
        b
@@ -430,11 +456,8 @@ test('makeMove: black can capture atari', () => {
 
 test('makeMove: white can capture atari', () => {
     const game = new Game();
-    const mockBoard:any = {
-        setTurn: () => {},
-        drawStones: () => {}
-    };
-    game.boards = [mockBoard];
+    
+    mockGameElements(game);
 
     /*
        w
@@ -463,11 +486,8 @@ test('makeMove: white can capture atari', () => {
 
 test('makeMove: can capture on edge', () => {
     const game = new Game();
-    const mockBoard:any = {
-        setTurn: () => {},
-        drawStones: () => {}
-    };
-    game.boards = [mockBoard];
+    
+    mockGameElements(game);
 
     /*
     b
@@ -495,11 +515,8 @@ test('makeMove: can capture on edge', () => {
 
 test('makeMove: can capture on corner', () => {
     const game = new Game();
-    const mockBoard:any = {
-        setTurn: () => {},
-        drawStones: () => {}
-    };
-    game.boards = [mockBoard];
+    
+    mockGameElements(game);
 
     /*
     w  B
@@ -525,11 +542,8 @@ test('makeMove: can capture on corner', () => {
 
 test('makeMove: multi-capture', () => {
     const game = new Game();
-    const mockBoard:any = {
-        setTurn: () => {},
-        drawStones: () => {}
-    };
-    game.boards = [mockBoard];
+    
+    mockGameElements(game);
 
     /*
           b
@@ -571,11 +585,8 @@ test('makeMove: multi-capture', () => {
 
 test('makeMove: Cannot place immediately captured stone', () => {
     const game = new Game();
-    const mockBoard:any = {
-        setTurn: () => {},
-        drawStones: () => {}
-    };
-    game.boards = [mockBoard];
+    
+    mockGameElements(game);
 
     /*
        b
@@ -602,11 +613,8 @@ test('makeMove: Cannot place immediately captured stone', () => {
 
 test('makeMove: Can place stone if it will capture stones', () => {
     const game = new Game();
-    const mockBoard:any = {
-        setTurn: () => {},
-        drawStones: () => {}
-    };
-    game.boards = [mockBoard];
+    
+    mockGameElements(game);
 
     /*
        b  w
@@ -638,11 +646,8 @@ test('makeMove: Can place stone if it will capture stones', () => {
 
 test('makeMove: Cannot place stone if it repeats the previous board state (Ko)', () => {
     const game = new Game();
-    const mockBoard:any = {
-        setTurn: () => {},
-        drawStones: () => {}
-    };
-    game.boards = [mockBoard];
+    
+    mockGameElements(game);
 
     /*
        b  w
@@ -821,6 +826,8 @@ test('Territory: merge (unknown and none)', () => {
 
 test('getApparentTerritory: black enclosed', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b
@@ -843,6 +850,8 @@ test('getApparentTerritory: black enclosed', () => {
 
 test('getApparentTerritory: white enclosed', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        w
@@ -865,6 +874,8 @@ test('getApparentTerritory: white enclosed', () => {
 
 test('getApparentTerritory: edge', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
     b
@@ -886,6 +897,8 @@ test('getApparentTerritory: edge', () => {
 
 test('getApparentTerritory: corner', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
     +  B
@@ -905,6 +918,8 @@ test('getApparentTerritory: corner', () => {
 
 test('getApparentTerritory: multiple enclosed', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -933,6 +948,8 @@ test('getApparentTerritory: multiple enclosed', () => {
 
 test('getApparentTerritory: no apparent territory', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -960,6 +977,8 @@ test('getApparentTerritory: no apparent territory', () => {
 
 test('getApparentTerritory: odd shape', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -999,6 +1018,8 @@ test('getApparentTerritory: odd shape', () => {
 
 test('getApparentTerritory: odd shape (no apparent territory)', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -1033,6 +1054,8 @@ test('getApparentTerritory: odd shape (no apparent territory)', () => {
 
 test('getApparentTerritory: circle', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -1073,6 +1096,8 @@ test('getApparentTerritory: circle', () => {
 
 test('getApparentTerritory: area', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -1139,6 +1164,8 @@ test('getApparentTerritory: not captured', () => {
 
 test('getAllApparentTerritories: area', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
     -  b  b  b        w  w  w   
@@ -1223,6 +1250,8 @@ test('getAllApparentTerritories: area', () => {
 
 test('getTerritory: black encloses white', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b
@@ -1247,6 +1276,8 @@ test('getTerritory: black encloses white', () => {
 
 test('getTerritory: white encloses black', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        w
@@ -1271,6 +1302,8 @@ test('getTerritory: white encloses black', () => {
 
 test('getTerritory: black enclosed empty', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b
@@ -1293,6 +1326,8 @@ test('getTerritory: black enclosed empty', () => {
 
 test('getTerritory: white enclosed empty', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        w
@@ -1315,6 +1350,8 @@ test('getTerritory: white enclosed empty', () => {
 
 test('getTerritory: edge', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
     b
@@ -1338,6 +1375,8 @@ test('getTerritory: edge', () => {
 
 test('getTerritory: corner', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
     W  b
@@ -1359,6 +1398,8 @@ test('getTerritory: corner', () => {
 
 test('getTerritory: multiple enclosed', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -1389,6 +1430,8 @@ test('getTerritory: multiple enclosed', () => {
 
 test('getTerritory: multiple enclosed (extra stone)', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -1420,6 +1463,8 @@ test('getTerritory: multiple enclosed (extra stone)', () => {
 
 test('getTerritory: odd shape', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -1461,6 +1506,8 @@ test('getTerritory: odd shape', () => {
 
 test('getTerritory: odd shape (extra stone)', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -1503,6 +1550,8 @@ test('getTerritory: odd shape (extra stone)', () => {
 
 test('getTerritory: circle', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -1545,6 +1594,8 @@ test('getTerritory: circle', () => {
 
 test('getTerritory: area', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b
@@ -1615,6 +1666,8 @@ test('getTerritory: most of board', () => {
 
 test('claimTerritory: added to claimed array and claimed hash set', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
        b  b  b        w  w  w   
@@ -1694,6 +1747,8 @@ test('claimTerritory: added to claimed array and claimed hash set', () => {
 
 test('getAllTerritories: areas', () => {
     const game = new Game();
+    
+    mockGameElements(game);
 
     /*
     _____________________________________________________________
@@ -2318,11 +2373,8 @@ test('makeMove: Torus topology', () => {
     const yLines = 7;
     const topology = new Torus(xLines, yLines);
     const game = new Game(xLines, yLines, topology);
-    const mockBoard:any = {
-        setTurn: () => {},
-        drawStones: () => {}
-    };
-    game.boards = [mockBoard];
+
+    mockGameElements(game);
 
     /*
     w  B  _  _  _  _  b
@@ -2376,11 +2428,8 @@ test('makeMove: KleinBottle topology', () => {
     const yLines = 7;
     const topology = new KleinBottle(xLines, yLines);
     const game = new Game(xLines, yLines, topology);
-    const mockBoard:any = {
-        setTurn: () => {},
-        drawStones: () => {}
-    };
-    game.boards = [mockBoard];
+
+    mockGameElements(game);
 
     /*
     w  B  _  _  _  _  B
@@ -2440,11 +2489,8 @@ test('makeMove: RealProjectivePlane topology', () => {
     const yLines = 7;
     const topology = new RealProjectivePlane(xLines, yLines);
     const game = new Game(xLines, yLines, topology);
-    const mockBoard:any = {
-        setTurn: () => {},
-        drawStones: () => {}
-    };
-    game.boards = [mockBoard];
+
+    mockGameElements(game);
 
     /*
     w  B  _  _  _  _  _
@@ -2497,11 +2543,8 @@ test('getCapturedNeighbors: RealProjectivePlane - Bizzare 3 stone capture (No ov
     const yLines = 5;
     const topology = new RealProjectivePlane(xLines, yLines);
     const game = new Game(xLines, yLines, topology);
-    const mockBoard:any = {
-        setTurn: () => {},
-        drawStones: () => {}
-    };
-    game.boards = [mockBoard];
+
+    mockGameElements(game);
 
     /*
     w  b  _  _  _
@@ -2529,11 +2572,8 @@ test('getCapturedNeighbors: RealProjectivePlane - More complex bizzare capture (
     const yLines = 5;
     const topology = new RealProjectivePlane(xLines, yLines);
     const game = new Game(xLines, yLines, topology);
-    const mockBoard:any = {
-        setTurn: () => {},
-        drawStones: () => {}
-    };
-    game.boards = [mockBoard];
+
+    mockGameElements(game);
 
     /*
     w  w  b  _  _
@@ -2558,4 +2598,47 @@ test('getCapturedNeighbors: RealProjectivePlane - More complex bizzare capture (
     expect(capturedGroups[0]).toHaveLength(2);
     expect(capturedGroups[0]).toContain(game.intersections[0][0]);
     expect(capturedGroups[0]).toContain(game.intersections[1][0]);
+});
+
+test('getTerritory: RealProjectivePlane', () => {
+    const xLines = 7;
+    const yLines = 7;
+    const topology = new RealProjectivePlane(xLines, yLines);
+    const game = new Game(xLines, yLines, topology);
+
+    mockGameElements(game);
+
+    /*
+    w  -  b  _  _  _  _
+    -  b  _  _  _  _  _
+    b  _  _  _  _  _  _
+    _  _  _  _  _  _  b
+    _  _  _  _  _  b  -
+    _  _  _  _  b  -  -
+    _  _  _  _  _  b  w
+    */
+
+    game.intersections[0][2].stone = Stone.Black;
+    game.intersections[1][1].stone = Stone.Black;
+    game.intersections[2][0].stone = Stone.Black;
+    game.intersections[6][3].stone = Stone.Black;
+    game.intersections[5][4].stone = Stone.Black;
+    game.intersections[4][5].stone = Stone.Black;
+    game.intersections[5][6].stone = Stone.Black;
+
+    game.intersections[0][0].stone = Stone.White;
+    game.intersections[6][6].stone = Stone.White;
+
+    const territory = game['getTerritory'](game.intersections[0][0], Stone.Black);
+
+    expect(territory.owner).toBe(Stone.Black);
+    expect(territory.region).toHaveLength(7);
+    expect(territory.region).toContain(game.intersections[0][0]);
+    expect(territory.region).toContain(game.intersections[1][0]);
+    expect(territory.region).toContain(game.intersections[0][1]);
+    expect(territory.region).toContain(game.intersections[6][6]);
+    expect(territory.region).toContain(game.intersections[6][5]);
+    expect(territory.region).toContain(game.intersections[6][4]);
+    expect(territory.region).toContain(game.intersections[5][5]);
+    expect(territory.score).toEqual(9);
 });

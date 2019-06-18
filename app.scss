@@ -5,7 +5,7 @@
 }
 
 .navbar {
-    padding: 0.5rem 2rem;
+    padding: 0 2rem;
     color: #fff;
 
     .left, .right {
@@ -24,6 +24,13 @@
 
     .player {
         text-align: center;
+        padding: 0.25rem;
+        border-radius: 0.25rem;
+        border: 1px solid transparent;
+
+        &.active {
+            border-color: $secondary;
+        }
 
         .name {
             font-weight: bold;
@@ -54,7 +61,7 @@
 }
 
 #goban {
-    margin-top: 1em;
+    margin-top: 0.1em;
 
     svg {
         margin: auto;
