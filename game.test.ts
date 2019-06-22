@@ -1,5 +1,5 @@
 import * as puppeteer from 'puppeteer';
-import { Board, Game, Stone, Intersection, Territory, Topology, Torus, KleinBottle, RealProjectivePlane, Cylinder, MobiusStrip, Classic } from './game';
+import { Board, Game, Stone, Intersection, Territory, Topology, Torus, KleinBottle, RealProjectivePlane, Cylinder, MobiusStrip, Classic, HashSet } from './game';
 
 function mockGameElements(game: Game) {
     const noop:any = () => {};
@@ -33,6 +33,31 @@ test('Intersection: empty', () => {
     expect(int.xPos).toBe(0);
     expect(int.yPos).toBe(0);
     expect(int.stone).toBe(Stone.None);
+});
+
+test('HashSet: includes', () => {
+    const ints = [
+        new Intersection(0, 0),
+        new Intersection(0, 1)
+    ];
+
+    const hash = new HashSet<Intersection>(...ints);
+
+    expect(hash.includes(ints[0])).toBe(true);
+    expect(hash.includes(ints[1])).toBe(true);
+});
+
+test('HashSet: Removes duplicates', () => {
+    const ints = [
+        new Intersection(0, 0),
+        new Intersection(0, 1)
+    ];
+
+    const hash = new HashSet<Intersection>(...ints, ints[0]);
+
+    expect(hash.values()).toHaveLength(2);
+    expect(hash.includes(ints[0])).toBe(true);
+    expect(hash.includes(ints[1])).toBe(true);
 });
 
 // test('placing stones correctly', async () => {
@@ -2641,4 +2666,50 @@ test('getTerritory: RealProjectivePlane', () => {
     expect(territory.region).toContain(game.intersections[6][4]);
     expect(territory.region).toContain(game.intersections[5][5]);
     expect(territory.score).toEqual(9);
+});
+
+test('getCapturedGroup: RealProjectivePlane', () => {
+    const xLines = 7;
+    const yLines = 7;
+    const topology = new RealProjectivePlane(xLines, yLines);
+    const game = new Game(xLines, yLines, topology);
+
+    mockGameElements(game);
+
+    /*
+    w  w  b  _  _  _  _
+    w  b  _  _  _  _  _
+    b  _  _  _  _  _  _
+    _  _  _  _  _  _  b
+    _  _  _  _  _  b  w
+    _  _  _  _  b  w  w
+    _  _  _  _  _  b  w
+    */
+
+    game.intersections[0][2].stone = Stone.Black;
+    game.intersections[1][1].stone = Stone.Black;
+    game.intersections[2][0].stone = Stone.Black;
+    game.intersections[6][3].stone = Stone.Black;
+    game.intersections[5][4].stone = Stone.Black;
+    game.intersections[4][5].stone = Stone.Black;
+    game.intersections[5][6].stone = Stone.Black;
+
+    game.intersections[0][0].stone = Stone.White;
+    game.intersections[1][0].stone = Stone.White;
+    game.intersections[0][1].stone = Stone.White;
+    game.intersections[6][6].stone = Stone.White;
+    game.intersections[6][5].stone = Stone.White;
+    game.intersections[5][5].stone = Stone.White;
+    game.intersections[6][4].stone = Stone.White;
+
+    const captured = game['getCapturedGroup'](game.intersections[0][0]);
+
+    expect(captured).toHaveLength(7);
+    expect(captured).toContain(game.intersections[0][0]);
+    expect(captured).toContain(game.intersections[1][0]);
+    expect(captured).toContain(game.intersections[0][1]);
+    expect(captured).toContain(game.intersections[6][6]);
+    expect(captured).toContain(game.intersections[6][5]);
+    expect(captured).toContain(game.intersections[6][4]);
+    expect(captured).toContain(game.intersections[5][5]);
 });

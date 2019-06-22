@@ -443,7 +443,7 @@ export class Game {
     private blackScore: number = 0;
     private whiteScore: number = 0;
     private claimedTerritories: Territory[] = [];
-    private claimedTerritoryLookup: HashSet = new HashSet();
+    private claimedTerritoryLookup: HashSet<Intersection> = new HashSet();
 
     constructor(xLines: number = 19, yLines: number = 19, topology: Topology = null) {
         this.xLines = xLines;
@@ -848,7 +848,7 @@ export class Game {
         let capturedGroups: Intersection[][] = [];
 
         // For the bizzare cases where a single stone counts as 2 of the neighbors of a captured stone (Currently only in the Real Projective Plane)
-        let allCapturedStones: HashSet = new HashSet();
+        let allCapturedStones: HashSet<Intersection> = new HashSet();
         const doesOverlap = captured => {
             for(let int of captured) {
                 if(allCapturedStones.includes(int)) {
@@ -875,12 +875,16 @@ export class Game {
         return capturedGroups;
     }
 
-    private getCapturedGroup(intersection: Intersection, visited: Intersection[] = []): Intersection[] {
+    private getCapturedGroup(intersection: Intersection, visited: HashSet<Intersection> = null): Intersection[] {
+        if(visited == null) {
+            visited = new HashSet<Intersection>();
+        }
+
         const self = this;
-        const newNeighbors = self.getAdjacentNeighbors(intersection).filter(int => visited.indexOf(int) == -1);
+        const newNeighbors = self.getAdjacentNeighbors(intersection).filter(int => !visited.includes(int));
 
         // It's important here that "visited" is directly modified, so other branches of execution will see the changes
-        Array.prototype.push.apply(visited, [intersection, ...newNeighbors]);
+        [intersection, ...newNeighbors].forEach(int => visited.insert(int));
 
         let captured = true;
         let group = [intersection];
@@ -943,13 +947,13 @@ export class Game {
         return [...claimedTerritories, ...apparentTerritories];
     }
 
-    private getAllApparentTerritories(exclude: HashSet = new HashSet()): Territory[] {
+    private getAllApparentTerritories(exclude: HashSet<Intersection> = new HashSet()): Territory[] {
         const {
             xLines,
             yLines
         } = this;
 
-        let visited = new HashSet();
+        let visited = new HashSet<Intersection>();
         let territories: Territory[] = [];
 
         for(let x = 0; x < xLines; x++) {
@@ -969,7 +973,7 @@ export class Game {
         return territories;
     }
 
-    private getApparentTerritory(intersection: Intersection, visited: HashSet = null, greedy: boolean = false, mode: Pointer<Stone> = null): Territory {
+    private getApparentTerritory(intersection: Intersection, visited: HashSet<Intersection> = null, greedy: boolean = false, mode: Pointer<Stone> = null): Territory {
         if(intersection.stone != Stone.None) {
             return new Territory(Stone.None, []);
         }
@@ -1037,7 +1041,7 @@ export class Game {
         return new Territory(mode.value, territory.region);
     }
 
-    private getTerritory(intersection: Intersection, mode: Stone, visited: HashSet = null, greedy: boolean = false): Territory {
+    private getTerritory(intersection: Intersection, mode: Stone, visited: HashSet<Intersection> = null, greedy: boolean = false): Territory {
         if(intersection.stone == mode) {
             return new Territory(Stone.None, []);
         }
@@ -1078,7 +1082,7 @@ export class Game {
         return territory;
     }
 
-    private getOtherPlayer(turn?: Stone) {
+    private getOtherPlayer(turn?: Stone): Stone {
         if(turn == undefined) {
             turn = this.turn;
         }
@@ -1091,21 +1095,24 @@ export class Game {
         }
     }
 
-    private getAdjacentNeighbors(intersection: Intersection) {
+    private getAdjacentNeighbors(intersection: Intersection): Intersection[] {
         const {
             xPos,
             yPos
         } = intersection;
 
-        return [
+        // Get rid of duplicates in weird cases like the Real Projective Plane where points can overlap
+        let neighbors = new HashSet<Intersection>(
             this.getIntersection(xPos, yPos-1),
             this.getIntersection(xPos, yPos+1),
             this.getIntersection(xPos-1, yPos),
             this.getIntersection(xPos+1, yPos)
-        ];
+        );
+
+        return neighbors.values();
     }
 
-    private getIntersection(xPos: number, yPos: number) {
+    private getIntersection(xPos: number, yPos: number): Intersection {
         return this.topology.getIntersection(this.intersections, xPos, yPos);
     }
 }
@@ -1384,18 +1391,27 @@ export class MobiusStrip extends Topology {
     }
 }
 
-class HashSet {
-    // Not exactly a hash set, but it does the job
-    private hashSet: {[key: string]: true} = {};
+export class HashSet<T extends Hashable> {
+    private hashSet: {[key: string]: T} = {};
 
-    public includes(item: Hashable): boolean {
-        return item && this.hashSet[item.hashKey()] == true;
+    constructor(...items: T[]) {
+        for(const item of items) {
+            this.insert(item);
+        }
     }
 
-    public insert(item: Hashable) {
+    public includes(item: T): boolean {
+        return item && this.hashSet[item.hashKey()] == item;
+    }
+
+    public insert(item: T) {
         if(item) {
-            this.hashSet[item.hashKey()] = true;
+            this.hashSet[item.hashKey()] = item;
         }
+    }
+
+    public values(): T[] {
+        return Object.keys(this.hashSet).map(key => this.hashSet[key]);
     }
 }
 
