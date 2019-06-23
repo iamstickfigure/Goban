@@ -1054,11 +1054,7 @@ export class Game {
         const newNeighbors = self.getAdjacentNeighbors(intersection).filter(int => !visited.includes(int));
 
         // It's important here that "visited" is directly modified, so other branches of execution will see the changes
-        [intersection, ...newNeighbors].forEach(int => {
-            if(int != null && int.stone != mode) {
-                visited.insert(int);
-            }
-        });
+        [intersection, ...newNeighbors].forEach(int => visited.insert(int));
 
         let territory = new Territory(mode, [intersection]);
         for(let neighbor of newNeighbors) {
