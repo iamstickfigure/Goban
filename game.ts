@@ -2,7 +2,6 @@
 import * as d3 from 'd3';
 import * as $ from 'jquery';
 import { transpose } from 'd3';
-import { stat } from 'fs';
 
 export type SVGSelection = d3.Selection<d3.BaseType, {}, HTMLElement, any>;
 export type Selection = d3.Selection<SVGGElement, {}, HTMLElement, any>;
@@ -156,10 +155,17 @@ export class Board {
             height
         } = this;
 
-        this.boardElement = svg.append('g').attr('class', 'board');
-
         const x = boardLayout.boardX * width;
         const y = boardLayout.boardY * height;
+
+        if(boardLayout.main) {
+            this.boardElement = svg.select('g.main-boards').append('g')
+                .attr('class', 'board main');
+        }
+        else {
+            this.boardElement = svg.select('g.mirror-boards').append('g')
+                .attr('class', 'board');
+        }
 
         this.boardElement.attr('transform', `translate(${x} ${y})`);
 
@@ -555,15 +561,22 @@ export class Game {
         const svg = d3.select('#goban svg');
         this.svg = svg;
 
+        svg.append('g').attr('class', 'mirror-boards');
+        svg.append('g').attr('class', 'main-boards');
+
         if(topology instanceof Torus || topology instanceof KleinBottle || topology instanceof RealProjectivePlane) {
             svg.attr('width', svgHeight)
                 .attr('height', svgHeight);
+
+            svg.classed('nine-boards', true);
             
             boardDimension = svgHeight / 3;
         }
         else if(topology instanceof Cylinder || topology instanceof MobiusStrip) {
             svg.attr('width', svgWidth)
                 .attr('height', svgWidth / 3);
+
+            svg.classed('three-boards', true);
 
             boardDimension = svgWidth / 3;
         }
@@ -604,6 +617,35 @@ export class Game {
         for(let board of this.boards) {
             board.draw(intersections);
         }
+    }
+
+    public focusMainBoard(activate: boolean = true) {
+        const {
+            svg,
+            topology,
+            boards
+        } = this;
+
+        const mainBoard = svg.select('g.board.main');
+
+        if(activate) {
+            if(topology.layouts.length == 9) {
+                mainBoard.classed('scaled', true);
+            }
+        }
+        else {
+            mainBoard.classed('scaled', false);
+        }
+
+        // TODO: Deactivate board updating for performance?
+        // for(const board of boards) {
+        //     if(activate) {
+                
+        //     }
+        //     else {
+
+        //     }
+        // }
     }
 
     private pass() {
@@ -1237,7 +1279,7 @@ export abstract class Topology {
 
 export class Classic extends Topology {
     layouts: BoardLayout[] = [
-        new BoardLayout(0, 0, false, false)        
+        new BoardLayout(0, 0, false, false, true)        
     ];
 
     public getIntersection(intersections: Intersection[][], xPos: number, yPos: number): Intersection {
@@ -1256,7 +1298,7 @@ export class Torus extends Topology {
         new BoardLayout(1, 0, false, false),
         new BoardLayout(2, 0, false, false),
         new BoardLayout(0, 1, false, false),
-        new BoardLayout(1, 1, false, false),
+        new BoardLayout(1, 1, false, false, true),
         new BoardLayout(2, 1, false, false),
         new BoardLayout(0, 2, false, false),
         new BoardLayout(1, 2, false, false),
@@ -1282,7 +1324,7 @@ export class KleinBottle extends Topology {
         new BoardLayout(1, 0, false, false),
         new BoardLayout(2, 0, false, true),
         new BoardLayout(0, 1, false, true),
-        new BoardLayout(1, 1, false, false),
+        new BoardLayout(1, 1, false, false, true),
         new BoardLayout(2, 1, false, true),
         new BoardLayout(0, 2, false, true),
         new BoardLayout(1, 2, false, false),
@@ -1311,7 +1353,7 @@ export class RealProjectivePlane extends Topology {
         new BoardLayout(1, 0, true, false),
         new BoardLayout(2, 0, true, true),
         new BoardLayout(0, 1, false, true),
-        new BoardLayout(1, 1, false, false),
+        new BoardLayout(1, 1, false, false, true),
         new BoardLayout(2, 1, false, true),
         new BoardLayout(0, 2, true, true),
         new BoardLayout(1, 2, true, false),
@@ -1340,7 +1382,7 @@ export class RealProjectivePlane extends Topology {
 export class Cylinder extends Topology {
     layouts: BoardLayout[] = [
         new BoardLayout(0, 0, false, false),
-        new BoardLayout(1, 0, false, false),
+        new BoardLayout(1, 0, false, false, true),
         new BoardLayout(2, 0, false, false),
     ];
 
@@ -1363,7 +1405,7 @@ export class Cylinder extends Topology {
 export class MobiusStrip extends Topology {
     layouts: BoardLayout[] = [
         new BoardLayout(0, 0, false, true),
-        new BoardLayout(1, 0, false, false),
+        new BoardLayout(1, 0, false, false, true),
         new BoardLayout(2, 0, false, true),
     ];
 
@@ -1442,11 +1484,13 @@ class BoardLayout {
     boardY: number;
     hFlip: boolean;
     vFlip: boolean;
+    main: boolean;
 
-    constructor(boardX: number = 0, boardY: number = 0, hFlip: boolean = false, vFlip: boolean = false) {
+    constructor(boardX: number = 0, boardY: number = 0, hFlip: boolean = false, vFlip: boolean = false, main: boolean = false) {
         this.boardX = boardX;
         this.boardY = boardY;
         this.hFlip = hFlip;
         this.vFlip = vFlip;
+        this.main = main;
     }
 }

@@ -10,6 +10,10 @@
 
     .left, .right {
         width: 10%;
+        
+        @media screen and (max-width: 768px) {
+            width: 20%;
+        }
     }
 
     .right {
@@ -70,11 +74,35 @@
 
 g.board {
     background-image: url("https://upload.wikimedia.org/wikipedia/commons/4/46/Cerberiopsis_candelabra_MHNT.BOT.2010.6.59.jpg");
+    opacity: 0.8;
+    transition: transform 1s;
+
+    &.main {
+        opacity: 1;
+    }
+
+    &.scaled {
+        transform: translate(0, 0) scale(3);
+
+        g.lines line {
+            stroke-width: 0.5;
+        }
+    }
+}
+
+svg.nine-boards {
+    g.lines line {
+        stroke-width: 0.5;
+    }
 }
 
 g.lines line {
     stroke:black;
-    shape-rendering: crispEdges;
+    shape-rendering: geometricprecision;
+
+    @media screen and (max-width: 768px) {
+        stroke-width: 0.5;
+    }
 }
 
 g.dots circle.dot {
@@ -96,6 +124,12 @@ g.dots circle.dot {
 
 .stone.empty {
     display: none;
+}
+
+.stone {
+    @media screen and (max-width: 768px) {
+        stroke-width: 0.5;
+    }
 }
 
 .stone.black, .territory-marker.black {
