@@ -1,12 +1,17 @@
 
 <html>
 <head>
+    <!-- TODO: Add this meta tag and make it more mobile-friendly-ish -->
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
     <meta charset="UTF-8">
     <title>Goban</title>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark justify-content-between">
-        <a class="navbar-brand left" href="#">Goban</a>
+        <div class="left">
+            <a class="navbar-brand" href="/">Goβan <sup>BETA</sup></a>
+            <span id="topology-title" class="text-muted"></span>
+        </div>
 
         <div id="players" class="hidden">
             <div id="player-black" class="player active">
@@ -28,9 +33,20 @@
         </div>
 
         <div id="controls" class="right hidden">
-            <button id="pass-btn" type="button" class="btn btn-dark" alt="Pass">Pass</button>
-            <button id="undo-btn" type="button" class="btn btn-dark" alt="Undo">&lt;</button>
-            <button id="redo-btn" type="button" class="btn btn-dark" alt="Redo">&gt;</button>
+            <button id="tiled-btn" class="btn btn-dark active" type="button" data-toggle="button" alt="Tiled">Tiled View</button>
+
+            <button id="pass-btn" class="btn btn-dark" type="button" alt="Pass">Pass</button>
+            <button id="undo-btn" class="btn btn-dark" type="button" alt="Undo">&lt;</button>
+            <button id="redo-btn" class="btn btn-dark" type="button" alt="Redo">&gt;</button>
+
+            <div class="dropdown d-inline-block">
+                <button id="more-btn" type="button" class="btn btn-dark" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>
+
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="more-btn">
+                    <a id="save-btn" class="dropdown-item" href="#">Save</a>
+                    <a class="dropdown-item" href="#">Load</a>
+                </div>
+            </div>
         </div>
     </nav>
 

@@ -9,10 +9,10 @@
     color: #fff;
 
     .left, .right {
-        width: 10%;
+        width: 31%;
         
         @media screen and (max-width: 768px) {
-            width: 20%;
+            width: 31%;
         }
     }
 
@@ -22,7 +22,7 @@
 }
 
 #players {
-    width: 20em;
+    width: 20%;
     display: flex;
     justify-content: space-between;
 
@@ -73,7 +73,6 @@
 }
 
 g.board {
-    background-image: url("https://upload.wikimedia.org/wikipedia/commons/4/46/Cerberiopsis_candelabra_MHNT.BOT.2010.6.59.jpg");
     opacity: 0.8;
     transition: transform 1s;
 
