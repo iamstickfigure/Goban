@@ -21,6 +21,20 @@
     }
 }
 
+body {
+    &:not(.in-game) {
+        .game-only {
+            display: none !important;
+        }
+    }
+
+    &.in-game {
+        .game-hidden {
+            display: none !important;
+        }
+    }
+}
+
 #players {
     width: 20%;
     display: flex;

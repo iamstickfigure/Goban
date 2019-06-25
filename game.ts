@@ -45,6 +45,8 @@ export class MainInterface {
     private yLines: number = 19;
 
     constructor() {
+        document.getElementsByClassName('navbar-brand')[0].addEventListener('click', () => location.reload());
+
         document.getElementById('classic-button').addEventListener('click', () => {
             this.startClassicGame();
         });
@@ -71,10 +73,7 @@ export class MainInterface {
             yLines
         } = this;
 
-        document.getElementById('start-menu').classList.add('hidden');
-        document.getElementById('goban').classList.remove('hidden');
-        document.getElementById('players').classList.remove('hidden');
-        document.getElementById('controls').classList.remove('hidden');
+        document.getElementsByTagName('body')[0].classList.add('in-game');
 
         this.game = new Game(xLines, yLines, topology);
         this.game.initDisplay();
@@ -545,6 +544,17 @@ export class Game {
         return ints;
     }
 
+    public toggleNavigationWarning(enable: boolean) {
+        if(enable) {
+            window.onbeforeunload = function() {
+                return "Are you sure you want to navigate away before saving?";
+            };
+        }
+        else {
+            window.onbeforeunload = null;
+        }
+    }
+
     public saveSGF() {
         const {
             topology: {
@@ -558,6 +568,7 @@ export class Game {
         const fileName = sgfExtension == null ? `goban-${dateString}.sgf` : `goban-${dateString}.${sgfExtension}.sgf`
 
         FileSaver.saveAs(sgfBlob, fileName);
+        this.toggleNavigationWarning(false);
     }
 
     public getSGF(): string {
@@ -833,6 +844,7 @@ export class Game {
         // console.log(`gameState\n${this.gameState.toString()}`);
 
         this.updateBoards();
+        this.toggleNavigationWarning(true);
     }
 
     private newGameState() {
