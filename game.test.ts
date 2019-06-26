@@ -2713,3 +2713,74 @@ test('getCapturedGroup: RealProjectivePlane', () => {
     expect(captured).toContain(game.intersections[6][4]);
     expect(captured).toContain(game.intersections[5][5]);
 });
+
+test('loadSGF: Create Classic', () => {
+    const game = Game.loadSGF('goban.sgf', '(;GM[1]FF[4]CA[UTF-8]AP[Goban]SZ[19])');
+
+    expect(game == null).toBe(false);
+    expect(game['topology'].getSgfExtension()).toBe(null);
+    expect(game['xLines']).toBe(19);
+    expect(game['yLines']).toBe(19);
+});
+
+test('loadSGF: Create Torus', () => {
+    const game = Game.loadSGF('goban.torus.sgf', '(;GM[1]FF[4]CA[UTF-8]AP[Goban]SZ[19])');
+
+    expect(game == null).toBe(false);
+    expect(game['topology'].getSgfExtension()).toBe('torus');
+    expect(game['xLines']).toBe(19);
+    expect(game['yLines']).toBe(19);
+});
+
+test('loadSGF: Create KleinBottle', () => {
+    const game = Game.loadSGF('goban.klein.sgf', '(;GM[1]FF[4]CA[UTF-8]AP[Goban]SZ[19])');
+
+    expect(game == null).toBe(false);
+    expect(game['topology'].getSgfExtension()).toBe('klein');
+    expect(game['xLines']).toBe(19);
+    expect(game['yLines']).toBe(19);
+});
+
+test('loadSGF: Create RealProjectivePlane', () => {
+    const game = Game.loadSGF('goban.rpp.sgf', '(;GM[1]FF[4]CA[UTF-8]AP[Goban]SZ[19])');
+
+    expect(game == null).toBe(false);
+    expect(game['topology'].getSgfExtension()).toBe('rpp');
+    expect(game['xLines']).toBe(19);
+    expect(game['yLines']).toBe(19);
+});
+
+test('loadSGF: Create Cylinder', () => {
+    const game = Game.loadSGF('goban.cyl.sgf', '(;GM[1]FF[4]CA[UTF-8]AP[Goban]SZ[19])');
+
+    expect(game == null).toBe(false);
+    expect(game['topology'].getSgfExtension()).toBe('cyl');
+    expect(game['xLines']).toBe(19);
+    expect(game['yLines']).toBe(19);
+});
+
+test('loadSGF: Create Mobius', () => {
+    const game = Game.loadSGF('goban.mobius.sgf', '(;GM[1]FF[4]CA[UTF-8]AP[Goban]SZ[19])');
+
+    expect(game == null).toBe(false);
+    expect(game['topology'].getSgfExtension()).toBe('mobius');
+    expect(game['xLines']).toBe(19);
+    expect(game['yLines']).toBe(19);
+});
+
+test('loadSGF: Make moves', () => {
+    const game = Game.loadSGF('goban.sgf', '(;GM[1]FF[4]CA[UTF-8]AP[Goban]SZ[19];B[aa];W[ba];B[ca];B[bb];W[];B[ba])');
+
+    expect(game == null).toBe(false);
+    expect(game['topology'].getSgfExtension()).toBe(null);
+    expect(game['xLines']).toBe(19);
+    expect(game['yLines']).toBe(19);
+
+    expect(game.intersections[0][0].stone).toBe(Stone.Black);
+    expect(game.intersections[1][0].stone).toBe(Stone.Black);
+    expect(game.intersections[2][0].stone).toBe(Stone.Black);
+    expect(game.intersections[1][1].stone).toBe(Stone.Black);
+    expect(game['blackScore']).toBe(1);
+    expect(game['gameState'].moveNum).toBe(6);
+    expect(game['gameState'].getState(4).isPass).toBe(true);
+});

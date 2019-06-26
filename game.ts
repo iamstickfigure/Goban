@@ -555,13 +555,102 @@ export class Game {
         }
     }
 
+    public static loadSGF(filename: string, sgf: string): Game {
+        let game: Game = null;
+        let topology: Topology = null;
+        let size: number = null;
+
+        const charToPos = (char: string) => char.charCodeAt(0) - 97;
+
+        const applyProp = (prop: string, val: string) => {
+            switch(prop) {
+                case 'GN':
+                    if(val != "1") {
+                        throw new Error(`${prop}[${val}] not supported`)
+                    }
+                    break;
+                case 'FF':
+                    if(val != "4") {
+                        throw new Error(`${prop}[${val}] not supported`)
+                    }
+                    break;
+                case 'SZ':
+                    size = +val;
+                    topology = Topology.createFromFilename(filename, size, size);
+                    game = new Game(size, size, topology);
+                    break;
+                case 'B':
+                    game.setTurn(Stone.Black, true);
+
+                    if(val == '') {
+                        game.pass(true)
+                    }
+                    else {
+                        game.makeMove(charToPos(val[0]), charToPos(val[1]), true);
+                    }
+                    break;
+                case 'W':
+                    game.setTurn(Stone.White, true);
+
+                    if(val == '') {
+                        game.pass(true)
+                    }
+                    else {
+                        game.makeMove(charToPos(val[0]), charToPos(val[1]), true);
+                    }
+                    break;
+                case 'CA': // UTF-8
+                case 'AP': // Goban
+                default:
+            }
+        }
+
+        const runNode = (node: string) => {
+            for(let i = 1, next = 1; i < node.length; i = next + 1) {
+                next = node.indexOf('[', i);
+                const propName = node.substring(i, next);
+
+                i = next + 1;
+                next = node.indexOf(']', i);
+                const propVal = node.substring(i, next);
+
+                applyProp(propName, propVal);
+            }
+        }
+
+        let moveNum = 0;
+        let variationStack: number[] = [];
+
+        for(let i = 0, next = 0, node = null; i < sgf.length && i != -1; i = next) {
+            if(sgf[i] == '(') {
+                variationStack.push(moveNum);
+                next = i + 1;
+            }
+            else if(sgf[i] == ')') {
+                moveNum = variationStack.pop();
+                next = i + 1;
+            }
+            else if(sgf[i] == ';') {
+                next = sgf.indexOf(';', i + 1);
+
+                if(next == -1) {
+                    next = sgf.slice(i + 1).search(/[;)(]/);
+                    next = next == -1 ? -1 : next + i + 1;
+                }
+
+                runNode(sgf.substring(i, next));
+            }
+        }
+
+        return game;
+    }
+
     public saveSGF() {
         const {
-            topology: {
-                sgfExtension
-            }
+            topology
         } = this;
 
+        const sgfExtension = topology.getSgfExtension();
         const sgfBlob = new Blob([this.getSGF()], { type: "text/plain;charset=utf-8" });
         const date = new Date();
         const dateString = `${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()}_${date.getHours()}-${date.getMinutes()}`;
@@ -709,13 +798,13 @@ export class Game {
         // }
     }
 
-    private pass() {
-        if(this.gameState.prevGameState && this.gameState.prevGameState.isPass) {
+    private pass(headless: boolean = false) {
+        if(this.gameState.prevGameState && this.gameState.prevGameState.isPass && !headless) {
             this.endGame();
         }
         else {
             this.gameState.isPass = true;
-            this.nextTurn();
+            this.nextTurn(headless);
         }
     }
 
@@ -743,13 +832,15 @@ export class Game {
         }
     }
 
-    private setTurn(turn: Stone) {
+    private setTurn(turn: Stone, headless: boolean = false) {
         this.turn = turn;
 
-        this.displayActivePlayer(turn);
+        if(!headless) {
+            this.displayActivePlayer(turn);
 
-        for(let board of this.boards) {
-            board.setTurn(turn);
+            for(let board of this.boards) {
+                board.setTurn(turn);
+            }
         }
     }
 
@@ -765,7 +856,7 @@ export class Game {
         }
     }
 
-    private makeMove(xPos: number, yPos: number): boolean {
+    private makeMove(xPos: number, yPos: number, headless: boolean = false): boolean {
         const self = this;
         let legalMove = true;
 
@@ -817,7 +908,7 @@ export class Game {
                 }
             }
 
-            this.nextTurn();
+            this.nextTurn(headless);
             this.gameState.move = self.getIntersection(xPos, yPos).copy();
 
             return true;
@@ -830,12 +921,12 @@ export class Game {
         }
     }
 
-    private nextTurn() {
+    private nextTurn(headless: boolean = false) {
         if(this.turn === Stone.Black) {
-            this.setTurn(Stone.White);
+            this.setTurn(Stone.White, headless);
         }
         else {
-            this.setTurn(Stone.Black);
+            this.setTurn(Stone.Black, headless);
         }
 
         this.gameState = this.newGameState();
@@ -843,8 +934,10 @@ export class Game {
         // console.log(`prevGameState\n${this.gameState.prevGameState.toString()}`);
         // console.log(`gameState\n${this.gameState.toString()}`);
 
-        this.updateBoards();
-        this.toggleNavigationWarning(true);
+        if(!headless) {
+            this.updateBoards();
+            this.toggleNavigationWarning(true);
+        }
     }
 
     private newGameState() {
@@ -1317,8 +1410,8 @@ export class Territory {
 }
 
 export abstract class Topology {
+    public static sgfExtension: string = null;
     public abstract title: string;
-    public abstract sgfExtension: string;
     public abstract layouts: BoardLayout[];
     protected xLines: number;
     protected yLines: number;
@@ -1326,6 +1419,10 @@ export abstract class Topology {
     constructor(xLines: number, yLines: number) {
         this.xLines = xLines;
         this.yLines = yLines;
+    }
+
+    public getSgfExtension() {
+        return (<typeof Topology>this.constructor).sgfExtension; 
     }
 
     public abstract getIntersection(intersections: Intersection[][], xPos: number, yPos: number): Intersection;
@@ -1342,11 +1439,32 @@ export abstract class Topology {
     public static flip(n: number, m: number): number {
         return m - n - 1;
     }
+
+    public static createFromFilename(filename: string, xLines: number = 19, yLines: number = 19) {
+        const right = filename.toLowerCase().lastIndexOf('.sgf');
+        const left = filename.lastIndexOf('.', right - 1);
+        const ext = left > -1 ? filename.substring(left + 1, right) : null;
+
+        switch(ext) {
+            case Torus.sgfExtension:
+                return new Torus(xLines, yLines);
+            case KleinBottle.sgfExtension:
+                return new KleinBottle(xLines, yLines);
+            case RealProjectivePlane.sgfExtension:
+                return new RealProjectivePlane(xLines, yLines);
+            case Cylinder.sgfExtension:
+                return new Cylinder(xLines, yLines);
+            case MobiusStrip.sgfExtension:
+                return new MobiusStrip(xLines, yLines);
+            default:
+                return new Classic(xLines, yLines);
+        }
+    }
 }
 
 export class Classic extends Topology {
+    static sgfExtension: string = null;
     title: string = 'Classic';
-    sgfExtension: string = null;
     layouts: BoardLayout[] = [
         new BoardLayout(0, 0, false, false, true)        
     ];
@@ -1362,8 +1480,8 @@ export class Classic extends Topology {
 }
 
 export class Torus extends Topology {
+    static sgfExtension: string = 'torus';
     title: string = 'Torus';
-    sgfExtension: string = 'torus';
     layouts: BoardLayout[] = [
         new BoardLayout(0, 0, false, false),
         new BoardLayout(1, 0, false, false),
@@ -1390,8 +1508,8 @@ export class Torus extends Topology {
 }
 
 export class KleinBottle extends Topology {
+    static sgfExtension: string = 'klein';
     title: string = 'Klein Bottle';
-    sgfExtension: string = 'klein';
     layouts: BoardLayout[] = [
         new BoardLayout(0, 0, false, true),
         new BoardLayout(1, 0, false, false),
@@ -1421,8 +1539,8 @@ export class KleinBottle extends Topology {
 }
 
 export class RealProjectivePlane extends Topology {
+    static sgfExtension: string = 'rpp';
     title: string = 'Real Projective Plane';
-    sgfExtension: string = 'rpp';
     layouts: BoardLayout[] = [
         new BoardLayout(0, 0, true, true),
         new BoardLayout(1, 0, true, false),
@@ -1455,8 +1573,8 @@ export class RealProjectivePlane extends Topology {
 }
 
 export class Cylinder extends Topology {
+    static sgfExtension: string = 'cyl';
     title: string = 'Cylinder';
-    sgfExtension: string = 'cyl';
     layouts: BoardLayout[] = [
         new BoardLayout(0, 0, false, false),
         new BoardLayout(1, 0, false, false, true),
@@ -1480,8 +1598,8 @@ export class Cylinder extends Topology {
 }
 
 export class MobiusStrip extends Topology {
+    static sgfExtension: string = 'mobius';
     title: string = 'Mobius Strip';
-    sgfExtension: string = 'mobius';
     layouts: BoardLayout[] = [
         new BoardLayout(0, 0, false, true),
         new BoardLayout(1, 0, false, false, true),
