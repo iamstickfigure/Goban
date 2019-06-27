@@ -2784,3 +2784,66 @@ test('loadSGF: Make moves', () => {
     expect(game['gameState'].moveNum).toBe(6);
     expect(game['gameState'].getState(4).isPass).toBe(true);
 });
+
+test('loadSGF: Ignore whitespace', () => {
+    const game = Game.loadSGF('goban.sgf', `  (
+
+        ;GM[1]
+        FF[4]
+        CA[UTF-8]
+        AP[Goban]
+        SZ[19]
+                  
+        ; B[aa]
+        ;W[ba]
+        ;B[ca]
+        ;B[bb]
+        ;W[]
+        ;B[ba]
+
+    )  
+    `);
+
+    expect(game == null).toBe(false);
+    expect(game['topology'].getSgfExtension()).toBe(null);
+    expect(game['xLines']).toBe(19);
+    expect(game['yLines']).toBe(19);
+
+    expect(game.intersections[0][0].stone).toBe(Stone.Black);
+    expect(game.intersections[1][0].stone).toBe(Stone.Black);
+    expect(game.intersections[2][0].stone).toBe(Stone.Black);
+    expect(game.intersections[1][1].stone).toBe(Stone.Black);
+    expect(game['blackScore']).toBe(1);
+    expect(game['gameState'].moveNum).toBe(6);
+    expect(game['gameState'].getState(4).isPass).toBe(true);
+});
+
+test('loadSGF: Variations (End on latest variation)', () => {
+    const game = Game.loadSGF('goban.sgf', `(
+        ;GM[1]FF[4]CA[UTF-8]AP[Goban]SZ[19]
+        
+        ;B[aa]
+        (
+            ;W[ba];B[ca];B[bb];W[];B[ba]
+        )
+        (
+            ;W[ab];B[ac]
+        )
+    )`);
+
+    expect(game == null).toBe(false);
+    expect(game['topology'].getSgfExtension()).toBe(null);
+    expect(game['xLines']).toBe(19);
+    expect(game['yLines']).toBe(19);
+
+    expect(game.intersections[0][0].stone).toBe(Stone.Black);
+    expect(game.intersections[1][0].stone).toBe(Stone.None);
+    expect(game.intersections[2][0].stone).toBe(Stone.None);
+    expect(game.intersections[1][1].stone).toBe(Stone.None);
+
+    expect(game.intersections[0][1].stone).toBe(Stone.White);
+    expect(game.intersections[0][2].stone).toBe(Stone.Black);
+    
+    expect(game['blackScore']).toBe(0);
+    expect(game['gameState'].moveNum).toBe(3);
+});

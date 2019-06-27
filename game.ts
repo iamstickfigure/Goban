@@ -559,8 +559,25 @@ export class Game {
         let game: Game = null;
         let topology: Topology = null;
         let size: number = null;
+        let moveNum = 0;
+        let variationStack: number[] = [];
 
         const charToPos = (char: string) => char.charCodeAt(0) - 97;
+
+        const runMove = (turn: Stone, val: string) => {
+            if(game) {
+                game.setTurn(turn, true);
+
+                if(val == '') {
+                    game.pass(true)
+                }
+                else {
+                    game.makeMove(charToPos(val[0]), charToPos(val[1]), true);
+                }
+    
+                moveNum = game.gameState.moveNum;
+            }
+        }
 
         const applyProp = (prop: string, val: string) => {
             switch(prop) {
@@ -580,24 +597,10 @@ export class Game {
                     game = new Game(size, size, topology);
                     break;
                 case 'B':
-                    game.setTurn(Stone.Black, true);
-
-                    if(val == '') {
-                        game.pass(true)
-                    }
-                    else {
-                        game.makeMove(charToPos(val[0]), charToPos(val[1]), true);
-                    }
+                    runMove(Stone.Black, val);
                     break;
                 case 'W':
-                    game.setTurn(Stone.White, true);
-
-                    if(val == '') {
-                        game.pass(true)
-                    }
-                    else {
-                        game.makeMove(charToPos(val[0]), charToPos(val[1]), true);
-                    }
+                    runMove(Stone.White, val);
                     break;
                 case 'CA': // UTF-8
                 case 'AP': // Goban
@@ -608,37 +611,42 @@ export class Game {
         const runNode = (node: string) => {
             for(let i = 1, next = 1; i < node.length; i = next + 1) {
                 next = node.indexOf('[', i);
-                const propName = node.substring(i, next);
+
+                if(next == -1) {
+                    return;
+                }
+
+                const propName = node.substring(i, next).trim();
 
                 i = next + 1;
                 next = node.indexOf(']', i);
-                const propVal = node.substring(i, next);
+                const propVal = node.substring(i, next).trim();
 
                 applyProp(propName, propVal);
             }
         }
 
-        let moveNum = 0;
-        let variationStack: number[] = [];
-
-        for(let i = 0, next = 0, node = null; i < sgf.length && i != -1; i = next) {
+        for(let i = 0, next = 0; i < sgf.length && i != -1; i = next) {
             if(sgf[i] == '(') {
                 variationStack.push(moveNum);
-                next = i + 1;
+
+                if(game) {
+                    game.loadGameState(game.gameState.getState(moveNum), true);
+                }
             }
             else if(sgf[i] == ')') {
                 moveNum = variationStack.pop();
-                next = i + 1;
             }
             else if(sgf[i] == ';') {
-                next = sgf.indexOf(';', i + 1);
+                next = sgf.slice(i + 1).search(/[;)(]/);
+                next = next == -1 ? -1 : next + i + 1;
 
-                if(next == -1) {
-                    next = sgf.slice(i + 1).search(/[;)(]/);
-                    next = next == -1 ? -1 : next + i + 1;
-                }
+                runNode(sgf.substring(i, next).trim());
+            }
+            // Ignore everything else (like whitespace)
 
-                runNode(sgf.substring(i, next));
+            if(next <= i) {
+                next = i + 1;
             }
         }
 
@@ -990,7 +998,7 @@ export class Game {
         document.getElementById('white-score').innerHTML = `${whiteScore} + ${whiteTerritory} = ${whiteScore + whiteTerritory}`;
     }
 
-    private loadGameState(state: GameState) {
+    private loadGameState(state: GameState, headless: boolean = false) {
         if(state) {
             const {
                 xLines,
@@ -998,7 +1006,7 @@ export class Game {
                 intersections
             } = this;
 
-            this.setTurn(state.turn);
+            this.setTurn(state.turn, headless);
 
             for(let x = 0; x < xLines; x++) {
                 for(let y = 0; y < yLines; y++) {
