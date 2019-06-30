@@ -1,5 +1,8 @@
 @import "~bootstrap/scss/bootstrap";
 
+$white-stone: seashell;
+$black-stone: black;
+
 .hidden {
     display: none !important;
 }
@@ -107,6 +110,10 @@ svg.nine-boards {
     g.lines line {
         stroke-width: 0.5;
     }
+    
+    .annotate.circle {
+        stroke-width: 1;
+    }
 }
 
 g.lines line {
@@ -135,6 +142,27 @@ g.dots circle.dot {
     fill-opacity: 0.5;
 }
 
+.annotate {
+    pointer-events: none;
+
+    &.black {
+        stroke: $white-stone;
+    }
+
+    &.white {
+        stroke: $black-stone;
+    }
+
+    &.circle {
+        fill: none;
+        stroke-width: 3;
+        
+        @media screen and (max-width: 768px) {
+            stroke-width: 1;
+        }
+    }
+}
+
 .stone.empty {
     display: none;
 }
@@ -148,23 +176,23 @@ g.dots circle.dot {
 .stone.black, .territory-marker.black {
     stroke: black;
     stroke-opacity: 0.1;
-    fill: black;
+    fill: $black-stone;
 }
 
 .stone.white, .territory-marker.white {
     stroke: black;
     stroke-opacity: 0.1;
-    fill: seashell;
+    fill: $white-stone;
 }
 
 .territory.black .territory-marker {
     stroke: black;
     stroke-opacity: 0.1;
-    fill: black;
+    fill: $black-stone;
 }
 
 .territory.white .territory-marker {
     stroke: black;
     stroke-opacity: 0.1;
-    fill: seashell;
+    fill: $white-stone;
 }

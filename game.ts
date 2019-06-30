@@ -43,31 +43,66 @@ export class MainInterface {
     private game: Game;
     private xLines: number = 19;
     private yLines: number = 19;
+    public static elements: {[key: string]: HTMLElement} = {};
 
     constructor() {
-        document.getElementsByClassName('navbar-brand')[0].addEventListener('click', () => location.reload());
+        const elements = this.setupElements();
 
-        document.getElementById('classic-button').addEventListener('click', () => {
+        elements.navbarBrand.addEventListener('click', () => location.reload());
+
+        elements.loadButton.addEventListener('click', () => {
+            elements.sgfInput.click();
+        });
+        elements.sgfInput.addEventListener('change', e => {
+            const input = e.target as HTMLInputElement;
+            const file = input.files[0];
+            const reader = new FileReader();
+
+            reader.onload = () => {
+                this.loadAndStartGame(file.name, reader.result as string);
+            };
+
+            reader.readAsText(file);
+        });
+        elements.classicButton.addEventListener('click', () => {
             this.startClassicGame();
         });
-        document.getElementById('torus-button').addEventListener('click', () => {
+        elements.torusButton.addEventListener('click', () => {
             this.startTorusGame();
         });
-        document.getElementById('klein-button').addEventListener('click', () => {
+        elements.kleinButton.addEventListener('click', () => {
             this.startKleinBottleGame();
         });
-        document.getElementById('rpp-button').addEventListener('click', () => {
+        elements.rppButton.addEventListener('click', () => {
             this.startRealProjectivePlaneGame();
         });
-        document.getElementById('cylinder-button').addEventListener('click', () => {
+        elements.cylinderButton.addEventListener('click', () => {
             this.startCylinderGame();
         });
-        document.getElementById('mobius-button').addEventListener('click', () => {
+        elements.mobiusButton.addEventListener('click', () => {
             this.startMobiusStripGame();
         });
     }
 
-    private startGame(topology: Topology) {
+    private setupElements() {
+        const navbarBrand: any = document.getElementsByClassName('navbar-brand')[0];
+
+        MainInterface.elements = {
+            navbarBrand: navbarBrand,
+            loadButton: document.getElementById('load-btn'),
+            classicButton: document.getElementById('classic-button'),
+            torusButton: document.getElementById('torus-button'),
+            kleinButton: document.getElementById('klein-button'),
+            rppButton: document.getElementById('rpp-button'),
+            cylinderButton: document.getElementById('cylinder-button'),
+            mobiusButton: document.getElementById('mobius-button'),
+            sgfInput: document.getElementById('sgf-input')
+        };
+
+        return MainInterface.elements;
+    }
+
+    private startGame(topology: Topology, game: Game = null) {
         const {
             xLines,
             yLines
@@ -75,11 +110,23 @@ export class MainInterface {
 
         document.getElementsByTagName('body')[0].classList.add('in-game');
 
-        this.game = new Game(xLines, yLines, topology);
+        if(game) {
+            this.game = game;
+        }
+        else {
+            this.game = new Game(xLines, yLines, topology);
+        }
+
         this.game.initDisplay();
         
         Game.makeGlobal(this.game);
         // Game.autoPlacement(game, 1000);
+    }
+
+    private loadAndStartGame(filename: string, sgf: string) {
+        const game: Game = Game.loadSGF(filename, sgf);
+
+        this.startGame(null, game);
     }
 
     public startClassicGame() {
@@ -151,7 +198,7 @@ export class Board {
         this.turn = turn;
     }
 
-    public draw(intersections: Intersection[][]) {
+    public init(gameState: GameState) {
         const {
             svg,
             boardLayout,
@@ -174,14 +221,23 @@ export class Board {
         this.boardElement.attr('transform', `translate(${x} ${y})`);
 
         this.drawBackgroundImage();
-        this.drawGrid(intersections);
+        this.drawGrid(gameState.intersections);
         this.drawHandicapPoints();
 
         this.boardElement.append('g').attr('class', 'intersections');
         this.boardElement.append('g').attr('class', 'territories');
         this.boardElement.append('g').attr('class', 'overlay');
 
-        this.drawStones(intersections);
+        this.draw(gameState);
+    }
+
+    public draw(gameState: GameState) {
+        if(!gameState) {
+            return;
+        }
+
+        this.drawStones(gameState.intersections);
+        this.drawAnnotation(gameState.move);
     }
 
     private drawBackgroundImage() {
@@ -257,7 +313,7 @@ export class Board {
                     .attr('y2', d => this.getBoardY(d.yPos));
     }
 
-    public drawStones(intersections: Intersection[][]) {
+    private drawStones(intersections: Intersection[][]) {
         const self = this;
         const {
             boardElement,
@@ -329,6 +385,31 @@ export class Board {
         });
     }
 
+    public drawAnnotation(int: Intersection) {
+        const self = this;
+        const {
+            stoneRadius,
+            boardElement,
+        } = this;
+
+        const data = int ? [int] : []; 
+
+        const overlay = boardElement.select('g.overlay');
+        const annotate:any = overlay.selectAll('circle.annotate')
+            .data(data);
+
+        annotate.enter()
+            .append('circle')
+            .merge(annotate)
+                .attr('class', d => `annotate circle ${STONE_CLASSES[d.stone]}`)
+                .attr('cx', d => self.getBoardX(d.xPos))
+                .attr('cy', d => self.getBoardY(d.yPos))
+                .attr('r', stoneRadius / 2);
+
+        annotate.exit()
+            .remove();
+    }
+
     public drawHighlight() {
         const self = this;
         const {
@@ -341,7 +422,7 @@ export class Board {
 
         const overlay = boardElement.select('g.overlay');
         const highlight:any = overlay.selectAll('circle.highlight')
-            .data(data)
+            .data(data);
 
         highlight.enter()
             .append('circle')
@@ -443,6 +524,7 @@ export class Game {
     private highlighedInt: DataBinding<Intersection> = new DataBinding();
     public intersections: Intersection[][];
     private gameState: GameState = null;
+    private lastMove: Intersection = null;
     private topology: Topology;
     private svg: SVGSelection;
     private width: number = 500;
@@ -556,6 +638,7 @@ export class Game {
     }
 
     public static loadSGF(filename: string, sgf: string): Game {
+        // Might want to make SGF writing/parsing it's own class at some point, but it's fine for now.
         let game: Game = null;
         let topology: Topology = null;
         let size: number = null;
@@ -695,7 +778,7 @@ export class Game {
         const {
             xLines,
             yLines,
-            intersections,
+            gameState,
             makeMove,
             claimTerritory,
             topology
@@ -773,7 +856,7 @@ export class Game {
         });
 
         for(let board of this.boards) {
-            board.draw(intersections);
+            board.init(gameState);
         }
     }
 
@@ -916,8 +999,9 @@ export class Game {
                 }
             }
 
+            this.lastMove = self.getIntersection(xPos, yPos);
+            this.highlighedInt.setValue(null);
             this.nextTurn(headless);
-            this.gameState.move = self.getIntersection(xPos, yPos).copy();
 
             return true;
         }
@@ -938,6 +1022,7 @@ export class Game {
         }
 
         this.gameState = this.newGameState();
+        this.gameState.move = this.lastMove.copy();
         
         // console.log(`prevGameState\n${this.gameState.prevGameState.toString()}`);
         // console.log(`gameState\n${this.gameState.toString()}`);
@@ -955,13 +1040,13 @@ export class Game {
     private updateBoards() {
         const {
             boards,
-            intersections,
+            gameState,
             blackScore,
             whiteScore
         } = this;
 
         for(let board of boards) {
-            board.drawStones(intersections);
+            board.draw(gameState);
         }
         // board.printStones();
 
