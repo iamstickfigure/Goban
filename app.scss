@@ -7,6 +7,20 @@ $black-stone: black;
     display: none !important;
 }
 
+[data-toggle="button"] {
+    &.active {
+        .on-inactive {
+            display: none;
+        }
+    }
+
+    &:not(.active) {
+        .on-active {
+            display: none;
+        }
+    }
+}
+
 .navbar {
     padding: 0 2rem;
     color: #fff;
