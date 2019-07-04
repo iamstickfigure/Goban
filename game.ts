@@ -1,6 +1,7 @@
 // https://www.giacomodebidda.com/how-to-import-d3-plugins-with-webpack/
 import * as d3 from 'd3';
 import * as $ from 'jquery';
+import * as M from 'materialize-css';
 import { transpose } from 'd3';
 import * as FileSaver from 'file-saver';
 
@@ -82,10 +83,16 @@ export class MainInterface {
         elements.mobiusButton.addEventListener('click', () => {
             this.startMobiusStripGame();
         });
+
+        
+        const dropdownTriggers = document.querySelectorAll('.dropdown-trigger');
+        M.Dropdown.init(dropdownTriggers, {
+            coverTrigger: false
+        });
     }
 
     private setupElements() {
-        const navbarBrand: any = document.getElementsByClassName('navbar-brand')[0];
+        const navbarBrand: any = document.getElementsByClassName('brand-logo')[0];
 
         MainInterface.elements = {
             navbarBrand: navbarBrand,
@@ -619,7 +626,7 @@ export class Game {
 
             for(let y = 0; y < yLines; y++) {
                 ints[x][y] = new Intersection(x, y);
-                ints[x][y].stone = intersections[x][y].stone
+                ints[x][y].stone = intersections[x][y].stone;
             }
         }
 
@@ -666,12 +673,12 @@ export class Game {
             switch(prop) {
                 case 'GN':
                     if(val != "1") {
-                        throw new Error(`${prop}[${val}] not supported`)
+                        throw new Error(`${prop}[${val}] not supported`);
                     }
                     break;
                 case 'FF':
                     if(val != "4") {
-                        throw new Error(`${prop}[${val}] not supported`)
+                        throw new Error(`${prop}[${val}] not supported`);
                     }
                     break;
                 case 'SZ':

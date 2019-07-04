@@ -5,11 +5,13 @@
     <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
     <meta charset="UTF-8">
     <title>Goβan</title>
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark justify-content-between">
+    <nav class="navbar navbar-expand-lg navbar-dark blue-grey darken-4">
         <div class="left">
-            <a class="navbar-brand" href="#">Goβan <sup>BETA</sup></a>
+            <a class="brand-logo" href="#">Goβan <sup>BETA</sup></a>
             <span id="topology-title" class="text-muted game-only"></span>
         </div>
 
@@ -33,20 +35,34 @@
         </div>
 
         <div id="controls" class="right">
-            <button id="tiled-btn" class="btn btn-dark active game-only" type="button" data-toggle="button" alt="Tiled">Tiled View</button>
+            <button id="tiled-btn" class="btn-flat white-text active game-only" type="button" data-toggle="button" alt="Tiled">
+                <i class="material-icons">grid_on</i>
+            </button>
 
-            <button id="pass-btn" class="btn btn-dark game-only" type="button" alt="Pass">Pass</button>
-            <button id="undo-btn" class="btn btn-dark game-only" type="button" alt="Undo">&lt;</button>
-            <button id="redo-btn" class="btn btn-dark game-only" type="button" alt="Redo">&gt;</button>
+            <button id="pass-btn" class="btn-flat white-text game-only" type="button" alt="Pass">
+                <i class="material-icons">redo</i>
+            </button>
+            <button id="undo-btn" class="btn-flat white-text game-only" type="button" alt="Undo">
+                <i class="material-icons">chevron_left</i>
+            </button>
+            <button id="redo-btn" class="btn-flat white-text game-only" type="button" alt="Redo">
+                <i class="material-icons">chevron_right</i>
+            </button>
 
             <div class="dropdown d-inline-block">
-                <button id="more-btn" type="button" class="btn btn-dark" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>
+                <button id="more-btn" type="button" class="btn-flat white-text dropdown-trigger" data-target="controls-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="material-icons">more_horiz</i>
+                </button>
 
-                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="more-btn">
-                    <a id="save-btn" class="dropdown-item game-only" href="#">Save SGF</a>
-                    <a id="load-btn" class="dropdown-item game-hidden" href="#">Load SGF</a>
-                    <input type="file" id="sgf-input" accept=".sgf" class="hidden" />
-                </div>
+                <ul id="controls-dropdown" class="dropdown-content dropdown-menu-right" aria-labelledby="more-btn">
+                    <li class="game-only">
+                        <a id="save-btn" class="dropdown-item" href="#">Save SGF</a>
+                    </li>
+                    <li class="game-hidden">
+                        <a id="load-btn" class="dropdown-item" href="#">Load SGF</a>
+                        <input type="file" id="sgf-input" accept=".sgf" class="hidden" />
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>

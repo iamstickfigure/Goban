@@ -1,6 +1,7 @@
 import { Game, MainInterface } from './game';
 
-import 'bootstrap';
+// import 'bootstrap';
+import 'materialize-css';
 import './app.scss';
 
 window.onload = () => {
