@@ -3,6 +3,10 @@
 $white-stone: seashell;
 $black-stone: black;
 
+.tooltip {
+    top: 0;
+}
+
 .hidden {
     display: none !important;
 }
@@ -83,8 +87,9 @@ body {
 
 .card.game-overview {
     width: 33%;
+    height: 25em;
 
-    div.card-img-top {
+    .card-img-top {
         height: 13em;
         text-align: center;
 
@@ -92,6 +97,14 @@ body {
             max-height: 100%;
             max-width: 100%;
         }
+    }
+
+    .card-text {
+        height: 4em;
+    }
+
+    .card-bottom {
+        text-align: right;
     }
 }
 

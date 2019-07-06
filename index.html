@@ -35,18 +35,18 @@
         </div>
 
         <div id="controls" class="right">
-            <button id="tiled-btn" class="btn btn-dark active game-only" type="button" data-toggle="button" alt="Tiled">
+            <button id="tiled-btn" class="btn btn-dark active game-only has-tooltip" type="button" data-toggle="button" title="Tiled View">
                 <i class="material-icons on-active">grid_on</i>
                 <i class="material-icons on-inactive">grid_off</i>
             </button>
 
-            <button id="pass-btn" class="btn btn-dark game-only" type="button" alt="Pass">
+            <button id="pass-btn" class="btn btn-dark game-only has-tooltip" type="button" alt="Pass" title="Pass">
                 <i class="material-icons">redo</i>
             </button>
-            <button id="undo-btn" class="btn btn-dark game-only" type="button" alt="Undo">
+            <button id="undo-btn" class="btn btn-dark game-only has-tooltip" type="button" alt="Undo" title="Undo">
                 <i class="material-icons">chevron_left</i>
             </button>
-            <button id="redo-btn" class="btn btn-dark game-only" type="button" alt="Redo">
+            <button id="redo-btn" class="btn btn-dark game-only has-tooltip" type="button" alt="Redo" title="Redo">
                 <i class="material-icons">chevron_right</i>
             </button>
 
@@ -76,7 +76,9 @@
                     <p class="card-text">
                         Classic game of Go with edges and corners.
                     </p>
-                    <button id="classic-button" type="button" class="btn btn-primary">Start</button>
+                    <div class="card-bottom">
+                        <button id="classic-button" type="button" class="btn btn-primary">Start</button>
+                    </div>
                 </div>
             </div>
             <div class="card game-overview">
@@ -89,7 +91,9 @@
                     <p class="card-text">
                         Edges wrap around (Like pacman)
                     </p>
-                    <button id="torus-button" type="button" class="btn btn-primary">Start</button>
+                    <div class="card-bottom">
+                        <button id="torus-button" type="button" class="btn btn-primary">Start</button>
+                    </div>
                 </div>
             </div>
             <div class="card game-overview">
@@ -102,7 +106,9 @@
                     <p class="card-text">
                         Edges wrap around like the torus above and below, but flip vertically left and right.
                     </p>
-                    <button id="klein-button" type="button" class="btn btn-primary">Start</button>
+                    <div class="card-bottom">
+                        <button id="klein-button" type="button" class="btn btn-primary">Start</button>
+                    </div>
                 </div>
             </div>
             <div class="card game-overview">
@@ -115,7 +121,9 @@
                     <p class="card-text">
                         Edges wrap around, but flip horizontally up and down, and flip vertically left and right.
                     </p>
-                    <button id="rpp-button" type="button" class="btn btn-primary">Start</button>
+                    <div class="card-bottom">
+                        <button id="rpp-button" type="button" class="btn btn-primary">Start</button>
+                    </div>
                 </div>
             </div>
             <div class="card game-overview">
@@ -128,7 +136,9 @@
                     <p class="card-text">
                         Wrap around like the torus left and right, but the top and bottom are hard edges like classic.
                     </p>
-                    <button id="cylinder-button" type="button" class="btn btn-primary">Start</button>
+                    <div class="card-bottom">
+                        <button id="cylinder-button" type="button" class="btn btn-primary">Start</button>
+                    </div>
                 </div>
             </div>
             <div class="card game-overview">
@@ -141,7 +151,9 @@
                     <p class="card-text">
                         Wrap around left and right and flips vertically, but the top and bottom are hard edges like classic.
                     </p>
-                    <button id="mobius-button" type="button" class="btn btn-primary">Start</button>
+                    <div class="card-bottom">
+                        <button id="mobius-button" type="button" class="btn btn-primary">Start</button>
+                    </div>
                 </div>
             </div>
         </div>

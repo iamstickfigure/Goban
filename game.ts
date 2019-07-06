@@ -82,6 +82,14 @@ export class MainInterface {
         elements.mobiusButton.addEventListener('click', () => {
             this.startMobiusStripGame();
         });
+
+        $('.has-tooltip').tooltip({
+            trigger: 'hover',
+            delay: {
+                show: 700, 
+                hide: 0
+            }
+        });
     }
 
     private setupElements() {
