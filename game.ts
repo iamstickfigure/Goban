@@ -1,7 +1,6 @@
 // https://www.giacomodebidda.com/how-to-import-d3-plugins-with-webpack/
-import * as d3 from 'd3';
+import * as d3 from 'd3-selection';
 import * as $ from 'jquery';
-import { transpose } from 'd3';
 import * as FileSaver from 'file-saver';
 
 export type SVGSelection = d3.Selection<d3.BaseType, {}, HTMLElement, any>;
@@ -791,42 +790,14 @@ export class Game {
             claimTerritory,
             topology
         } = this;
-
-        const screenWidth = $(window).width();
-        const screenHeight = $(window).height();
-
-        // Support landscape with square boards only for now
-        const svgHeight = screenHeight - 80; //Math.min(screenWidth, screenHeight);
-        const svgWidth = screenWidth - 80; //Math.min(screenWidth, screenHeight);
-
-        let boardDimension = svgHeight;
+            
         const svg = d3.select('#goban svg');
         this.svg = svg;
 
         svg.append('g').attr('class', 'mirror-boards');
         svg.append('g').attr('class', 'main-boards');
 
-        if(topology instanceof Torus || topology instanceof KleinBottle || topology instanceof RealProjectivePlane) {
-            svg.attr('width', svgHeight)
-                .attr('height', svgHeight);
-
-            svg.classed('nine-boards', true);
-            
-            boardDimension = svgHeight / 3;
-        }
-        else if(topology instanceof Cylinder || topology instanceof MobiusStrip) {
-            svg.attr('width', svgWidth)
-                .attr('height', svgWidth / 3);
-
-            svg.classed('three-boards', true);
-
-            boardDimension = svgWidth / 3;
-        }
-        else {
-            // topology instanceof Classic
-            svg.attr('width', svgHeight)
-                .attr('height', svgHeight);
-        }
+        const boardDimension = this.setupSizing();
 
         const width = boardDimension;
         const height = boardDimension;
@@ -866,6 +837,74 @@ export class Game {
         for(let board of this.boards) {
             board.init(gameState);
         }
+    }
+
+    private setupSizing() {
+        const {
+            topology,
+            svg
+        } = this;
+
+        let boardDimension: number;
+
+        const screenWidth = $(window).width();
+        const screenHeight = $(window).height();
+
+        const svgHeight = screenHeight - 80;
+        const svgWidth = screenWidth - 80;
+
+        if(screenWidth >= screenHeight) {
+            boardDimension = svgHeight;
+
+            if(topology instanceof Torus || topology instanceof KleinBottle || topology instanceof RealProjectivePlane) {
+                svg.attr('width', svgHeight)
+                    .attr('height', svgHeight);
+
+                svg.classed('nine-boards', true);
+                
+                boardDimension = svgHeight / 3;
+            }
+            else if(topology instanceof Cylinder || topology instanceof MobiusStrip) {
+                svg.attr('width', svgWidth)
+                    .attr('height', svgWidth / 3);
+
+                svg.classed('three-boards', true);
+
+                boardDimension = svgWidth / 3;
+            }
+            else {
+                // topology instanceof Classic
+                svg.attr('width', svgHeight)
+                    .attr('height', svgHeight);
+            }
+        }
+        else {
+            boardDimension = svgHeight;
+
+            if(topology instanceof Torus || topology instanceof KleinBottle || topology instanceof RealProjectivePlane) {
+                svg.attr('width', svgWidth)
+                    .attr('height', svgWidth);
+
+                svg.classed('nine-boards', true);
+                
+                boardDimension = svgWidth / 3;
+            }
+            else if(topology instanceof Cylinder || topology instanceof MobiusStrip) {
+                svg.attr('width', svgWidth)
+                    .attr('height', svgWidth / 3);
+
+                svg.classed('three-boards', true);
+
+                boardDimension = svgWidth / 3;
+            }
+            else {
+                // topology instanceof Classic
+                svg.attr('width', svgWidth)
+                    .attr('height', svgWidth);
+            }
+        }
+
+        return boardDimension;
     }
 
     public focusMainBoard(activate: boolean = true) {
@@ -1445,7 +1484,9 @@ class GameState {
     }
 
     public toString(): string {
-        const transposed = transpose<Intersection>(this.intersections);
+        const transpose = array => array[0].map((col, i) => array.map(row => row[i]));
+
+        const transposed = transpose(this.intersections);
         
         return transposed.map(col => {
             return col.map(i => {
