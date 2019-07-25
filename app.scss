@@ -87,10 +87,10 @@ body {
 
 .card.game-overview {
     width: 33%;
-    height: 25em;
+    max-height: 25em;
 
     .card-img-top {
-        height: 13em;
+        max-height: 13em;
         text-align: center;
 
         img {
